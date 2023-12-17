@@ -26,7 +26,6 @@ class GetCatagoryListModel {
     return data;
   }
 }
-
 class DataList {
   String? araName;
   String? engName;

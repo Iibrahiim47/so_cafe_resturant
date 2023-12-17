@@ -143,6 +143,7 @@ class _AdminPageState extends State<AdminPage> {
                                       ),
                                       cancel: TextButton(
                                           onPressed: () => Get.back(),
+
                                           child: const Text('close')));
                                 },
                                 child: Container(
@@ -235,6 +236,9 @@ class _AdminPageState extends State<AdminPage> {
                   onPressed: () {
                     Navigator.pop(context);
                     clearcontroller();
+                    addAdminObj.isLoading.value=false;
+                    addAdminObj.isLoading2=false;
+
                   },
                   child: const Text("Cancel"),
                 ),
@@ -432,6 +436,9 @@ class _AdminPageState extends State<AdminPage> {
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
+                    addAdminObj.isLoading2=false;
+                    addAdminObj.isLoading.value =false;
+
                     clearcontroller();
                   },
                   child: const Text("Cancel"),

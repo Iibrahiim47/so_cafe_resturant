@@ -10,11 +10,11 @@ class StaticData {
   static AdminModel? adminModel;
   static String? token;
 }
-
 final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
 
 List<int?> allBranch_Ids = [];
 
-int selectedCategory = 0;
+int? selectedCategory;
 String token = '';
 bool isAdmin = false;

@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:admin_panel_so/constant/app_color.dart';
-import 'package:admin_panel_so/controller/branch_controller.dart';
+import 'package:admin_panel_so/controller/category_controller.dart';
 import 'package:admin_panel_so/sub_admin/model/get_category_model.dart';
 import 'package:admin_panel_so/super_admin/screens/pages/menue_page.dart';
 import 'package:admin_panel_so/utils/responsive.dart';
@@ -9,12 +9,14 @@ import 'package:admin_panel_so/utils/static_data.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import '../../../../../constant/media_qury.dart';
 import '../../../../../controller/menu_controller.dart';
 import '../../../constant/validator.dart';
 import '../../../utils/app_toast.dart';
 import '../../../utils/flushbar.dart';
 import '../../../utils/shared_widget/appTextField.dart';
+import '../../utils/shared_widget/appTextStyle.dart';
 
 class SubMenuPage extends StatefulWidget {
   final int? branchId;
@@ -48,76 +50,114 @@ class _SubMenuPageState extends State<SubMenuPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: StreamBuilder(
-        stream:
-            categObj.fetchCatagoriesList(branchId:StaticData.userProfile!.data!.branchId).asStream(),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return GridView.builder(
-              gridDelegate:
-              const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 150,
-                  mainAxisExtent: 170),
-              itemCount: snapshot.data!.length,
-              itemBuilder: (context, index) {
-                return InkWell(
-                  onTap: () {
-                    Get.to(() => MenuPage(
-                          catgName: snapshot.data![index].araName,
-                          categId: snapshot.data![index].categoryId,
-                        ));
-                  },
-                  child: Card(
-                    child: Column(
-                      children: [
-                        Align(
-                            alignment: Alignment.topRight,
-                            child: popUp(modal: snapshot.data![index])),
-                        Expanded(
-                            flex: 1,
-                            child: SizedBox(
-                              width: mediaQueryWidth(context),
-                              child: CachedNetworkImage(
-                                  placeholder: (context, url) => const Center(
-                                      child: CircularProgressIndicator()),
-                                  fit: BoxFit.cover,
-                                  useOldImageOnUrlChange: true,
-                                  imageUrl:
-                                      "${StaticValues.imageUrl}${snapshot.data![index].imageUrl!}"),
-                            )),
-                        Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 8),
+      body: Column(
+        children: [
+          Responsive.isDesktop(context)
+              ? Align(
+                  alignment: Alignment.centerLeft,
+                  child: AppTextStyle(
+                      marginVer: 10,
+                      fontSize: Responsive.isDesktop(context) ? 22 : null,
+                      marginHor: !Responsive.isDesktop(context)
+                          ? mediaQueryWidth(context) * 0.05
+                          : null,
+                      text: 'Menu'))
+              : const SizedBox(),
+          Responsive.isDesktop(context)
+              ? const SizedBox(
+                  height: kToolbarHeight,
+                )
+              : const SizedBox(),
+          Expanded(
+            child: StreamBuilder(
+              stream: categObj
+                  .fetchCatagoriesList(
+                      branchId: StaticData.userProfile!.data!.branchId)
+                  .asStream(),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return ReorderableGridView.builder(
+                    onReorder: (int oldIndex, int newIndex) {
+                      setState(() {
+                        if (newIndex > oldIndex) {
+                          newIndex -= 1;
+                        }
+                        final element = snapshot.data!.removeAt(oldIndex);
+                        snapshot.data!.insert(newIndex, element);
+                      });
+                    },
+                    gridDelegate:
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 150, mainAxisExtent: 170),
+                    itemCount: snapshot.data!.length,
+                    itemBuilder: (context, index) {
+                      return InkWell(
+                        onTap: () {
+                          Get.to(() => MenuPage(
+                                catgName: snapshot.data![index].araName,
+                                categId: snapshot.data![index].categoryId,
+                              ));
+                        },
+                        child: Card(
                           child: Column(
                             children: [
-                              Text(
-                                snapshot.data![index].araName!,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(color: Colors.white),
+                              Align(
+                                  alignment: Alignment.topRight,
+                                  child: popUp(modal: snapshot.data![index])),
+                              Expanded(
+                                  flex: 1,
+                                  child: SizedBox(
+                                    key: const Key("Const"),
+                                    width: mediaQueryWidth(context),
+                                    child: CachedNetworkImage(
+                                        placeholder: (context, url) =>
+                                            const Center(
+                                                child:
+                                                    CircularProgressIndicator()),
+                                        fit: BoxFit.cover,
+                                        useOldImageOnUrlChange: true,
+                                        imageUrl:
+                                            "${StaticValues.imageUrl}${snapshot.data![index].imageUrl!}"),
+                                  )),
+                              Container(
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 8),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      snapshot.data![index].araName!,
+                                      overflow: TextOverflow.ellipsis,
+                                      style:
+                                          const TextStyle(color: Colors.white),
+                                    ),
+                                    _text(
+                                        text: "See Menu>>",
+                                        color: appWhite,
+                                        size: 14.0)
+                                  ],
+                                ),
                               ),
-                              _text(
-                                  text: "See Menu>>",
-                                  color: appWhite,
-                                  size: 14.0)
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
+                      );
+                    },
+                  );
+                } else if (!snapshot.hasData) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                } else if (snapshot.connectionState ==
+                    ConnectionState.waiting) {
+                  const Center(child: CircularProgressIndicator());
+                }
+                return const Center(
+                  child: Text('No Category found'),
                 );
               },
-            );
-          } else if (!snapshot.hasData) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          } else if (snapshot.connectionState == ConnectionState.waiting) {
-            const Center(child: CircularProgressIndicator());
-          }
-          return const Center(
-            child: Text('No Category found'),
-          );
-        },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
           onPressed: () {

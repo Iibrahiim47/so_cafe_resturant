@@ -18,7 +18,7 @@ class MenuContreoller extends GetxController {
   http.Response? response;
   XFile? selectedImage;
   final ImagePicker imagePicker = ImagePicker();
-
+  List<Data>? selectedProductList;
   deo.Dio dio = deo.Dio();
   bool isLoading2 = false;
 
@@ -27,9 +27,6 @@ class MenuContreoller extends GetxController {
         .pickImage(source: ImageSource.gallery)
         .then((value) => selectedImage = value);
   }
-
-
-
 
   Future<List<Data>> fetchProductList({categoryId}) async {
     try {
@@ -44,6 +41,8 @@ class MenuContreoller extends GetxController {
       if (response.statusCode == 200) {
         final prodData = GetProductModel.fromJson(jsonDecode(response.body));
         List<Data> getProductListData = prodData.data ?? [];
+        selectedProductList = getProductListData;
+        print("Menu List ${jsonEncode(selectedProductList)}");
         return getProductListData;
       } else {
         // Handle error cases here
@@ -61,7 +60,6 @@ class MenuContreoller extends GetxController {
       String? description,
       double? price,
       int? categoryId}) async {
-
     try {
       if (selectedImage != null) {
         await selectedImage!.readAsBytes().then((value) async {
@@ -101,44 +99,6 @@ class MenuContreoller extends GetxController {
       print("Exception: $e");
       rethrow; // Re-throw the exception to handle it elsewhere if needed.
     }
-    // try {
-    //   if (selectedImage != null) {
-    //     await selectedImage!.readAsBytes().then((value) async {
-    //       deo.FormData data = deo.FormData.fromMap({
-    //         "Image": deo.MultipartFile.fromBytes(value,
-    //             filename: basename("${selectedImage!.path}.jpg")),
-    //         "ARName": arbName,
-    //         "EngName": engName,
-    //         "CategoryType": selectedCategoryType,
-    //         "BranchId": branchId
-    //       });
-    //
-    //       var response = await dio.post(
-    //         "${StaticValues.addProductUrl}$categoryId",
-    //         data: data,
-    //         options: Options(
-    //           headers: <String, String>{
-    //             "Content-type": "multipart/form-data",
-    //             "Authorization": "Bearer ${StaticData.token}"
-    //           },
-    //         ),
-    //       );
-    //
-    //       if (response.statusCode == 200) {
-    //         if (response.data != null) {
-    //           // You may want to handle the result here or return it, depending on your needs.
-    //           print("Upload successful. Result: ${response.data}");
-    //         }
-    //       } else {
-    //         throw Exception(
-    //             "Failed to upload item. Status code: ${response.statusCode}");
-    //       }
-    //     });
-    //   }
-    // } catch (e) {
-    //   print("Exception: $e");
-    //   rethrow; // Re-throw the exception to handle it elsewhere if needed.
-    // }
   }
 
   Future<void> deleteProduct({required int productId}) async {
@@ -154,7 +114,8 @@ class MenuContreoller extends GetxController {
       if (response.statusCode == 200) {
         // The product was deleted successfully.
       } else {
-        throw Exception('Failed to delete product. Status code: ${response.statusCode}');
+        throw Exception(
+            'Failed to delete product. Status code: ${response.statusCode}');
       }
     } catch (e) {
       print('Error deleting product: $e');
@@ -162,4 +123,87 @@ class MenuContreoller extends GetxController {
     }
   }
 
+  Future<String> updateProductIndex({required int productId, required int newIndex}) async {
+    final url =
+        Uri.parse('https://api.socafe.cafe/api/Product/UpdateProductIndex');
+
+    final headers = {
+      'Authorization': 'Bearer ${StaticData.token}',
+      'Content-Type': 'application/json-patch+json',
+    };
+
+    final data = [
+      {
+        "id": productId,
+        "index": newIndex,
+      }
+    ];
+
+    try {
+      final response = await http.post(
+        url,
+        headers: headers,
+        body: jsonEncode(data),
+      );
+
+      if (response.statusCode == 200) {
+        return "updated successfully";
+      } else {
+        throw Exception(
+            'Failed to update product index: ${response.statusCode}');
+      }
+    } catch (e) {
+      return 'Error: $e';
+    }
+  }
+
+  Future<bool> updateProduct({
+    String? engName,
+    String? arbName,
+    String? description,
+    double? price,
+    int? categoryId,
+    int? productId,
+  }) async {
+    const String updateApi =
+        'https://api.socafe.cafe/api/Product/UpdateProduct';
+
+    try {
+      if (selectedImage != null) {
+        await selectedImage!.readAsBytes().then((value) async {
+          deo.FormData data = deo.FormData.fromMap({
+            "Image": deo.MultipartFile.fromBytes(value,
+                filename: basename("${selectedImage!.path}.jpg")),
+            'ProductId': productId,
+            'EngName': engName,
+            'AraName': arbName,
+            'Description': description,
+            'Price': price,
+            'CategoryId': categoryId,
+          });
+
+          var response = await dio.post(
+            updateApi,
+            data: data,
+            options: Options(
+              headers: <String, String>{
+                "Content-type": "multipart/form-data",
+                "Authorization": "Bearer ${StaticData.token}",
+              },
+            ),
+          );
+
+          if (response.statusCode == 200) {
+            print(response.statusCode);
+            return true;
+          }
+        });
+      }
+    } catch (e) {
+      print(e);
+      return false;
+    }
+
+    return false;
+  }
 }

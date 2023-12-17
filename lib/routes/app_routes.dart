@@ -4,7 +4,7 @@ import 'package:admin_panel_so/sub_admin/dashboard/sub_admin_dashboard_screen.da
 import 'package:get/get.dart';
 
 import '../super_admin/dashborad/admin_mianDashboard_screen.dart';
-import '../login.dart';
+import '../auth/login.dart';
 
 class AppRoutes {
   static List<GetPage> appRoutes() => [

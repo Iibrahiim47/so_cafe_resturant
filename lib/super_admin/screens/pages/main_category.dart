@@ -3,7 +3,7 @@
 import 'dart:io';
 
 import 'package:admin_panel_so/constant/app_color.dart';
-import 'package:admin_panel_so/controller/branch_controller.dart';
+import 'package:admin_panel_so/controller/category_controller.dart';
 import 'package:admin_panel_so/sub_admin/model/get_category_model.dart';
 import 'package:admin_panel_so/super_admin/screens/pages/menue_page.dart';
 import 'package:admin_panel_so/utils/responsive.dart';
@@ -31,12 +31,14 @@ class _MainCategoryPageState extends State<MainCategoryPage> {
   final categObj = Get.put(CategoryGetandPostController());
   TextEditingController nameController = TextEditingController();
   TextEditingController arabicController = TextEditingController();
+  TextEditingController indexController = TextEditingController();
   final formKey = GlobalKey<FormState>();
   final menuController = Get.put(MenuContreoller());
 
   clearcontroller() {
     nameController.clear();
     arabicController.clear();
+    indexController.clear();
   }
 
   @override
@@ -58,16 +60,8 @@ class _MainCategoryPageState extends State<MainCategoryPage> {
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             return GridView.builder(
-              gridDelegate: Responsive.isMobile(context)
-                  ? const SliverGridDelegateWithFixedCrossAxisCount(
-                      mainAxisExtent: 200,
-                      childAspectRatio: 0.8,
-                      crossAxisCount: 2)
-                  : Responsive.isTablet(context)
-                      ? const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3)
-                      : const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 6),
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 170, mainAxisExtent: 170),
               shrinkWrap: true,
               scrollDirection: Axis.vertical,
               itemCount: snapshot.data!.length,
@@ -170,6 +164,9 @@ class _MainCategoryPageState extends State<MainCategoryPage> {
               araName: modal.araName,
               categoryId: modal.categoryId,
               imageUrl: modal.imageUrl);
+        }else if (value == 2) {
+          /// TODO use this method to update
+          updateCategoryIndex(categoryId: modal.categoryId!);
         }
       },
       color: appBlack,
@@ -184,6 +181,11 @@ class _MainCategoryPageState extends State<MainCategoryPage> {
               value: 1,
               child: Row(
                 children: [Icon(Icons.update), Text('update')],
+              )),
+          const PopupMenuItem(
+              value: 2,
+              child: Row(
+                children: [Icon(Icons.update), Text('update Index')],
               )),
         ];
       },
@@ -245,6 +247,29 @@ class _MainCategoryPageState extends State<MainCategoryPage> {
                       categObj.selectedImage == null
                           ? const Text('Tap to pick image')
                           : const SizedBox(),
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.grey, // Customize the border color
+                          ),
+                          borderRadius: BorderRadius.circular(5), // Customize the border radius
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: DropdownButton<String>(
+                          value: categObj.dropDownValue,
+                          onChanged: (value) {
+                            categObj.changeCategoryType(value!);
+                            setState((){});
+                          },
+                          items: categObj.typeList
+                              .map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                        ),
+                      ),
                       AppTextField(
                         controller: nameController,
                         label: 'Category',
@@ -289,6 +314,7 @@ class _MainCategoryPageState extends State<MainCategoryPage> {
                     onPressed: () {
                       Navigator.pop(context);
                       categObj.selectedImage = null;
+                      categObj.isLoading2 = false;
                       clearcontroller();
                     },
                     child: const Text("Cancel"),
@@ -427,6 +453,7 @@ class _MainCategoryPageState extends State<MainCategoryPage> {
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
+                    categObj.isLoading2 = false;
                     clearcontroller();
                   },
                   child: const Text("Cancel"),
@@ -434,17 +461,21 @@ class _MainCategoryPageState extends State<MainCategoryPage> {
                 TextButton(
                   onPressed: () async {
                     /// add method for update
-                    await categObj.updateCategory(
-                        categoryId: categoryId!,
-                        engName: nameController.text,
-                        arName: arabicController.text).then((value) {
+                    await categObj
+                        .updateCategory(
+                            categoryId: categoryId!,
+                            engName: nameController.text,
+                            arName: arabicController.text)
+                        .then((value) {
                       if (value) {
                         rebuild();
                         MyFlushBar.showSimpleFlushBar(
                             'Category Updated', context, Colors.green, white);
+                        Get.back();
                       } else {
-                        MyFlushBar.showSimpleFlushBar('Update Failed',
-                            context, Colors.redAccent, white);
+                        MyFlushBar.showSimpleFlushBar(
+                            'Update Failed', context, Colors.redAccent, white);
+                        Get.back();
                       }
                     });
                   },
@@ -458,6 +489,67 @@ class _MainCategoryPageState extends State<MainCategoryPage> {
         );
       },
     );
+  }
+  void updateCategoryIndex({required int categoryId}) {
+    Get.defaultDialog(
+        title: "Update Index",
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              categObj.isLoading2 = false;
+              clearcontroller();
+            },
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () async {
+              await categObj
+                  .updateCategoryIndex(categoryId: categoryId,newIndex: int.parse(indexController.text))
+                  .then((value) {
+                if (value=="updated successfully") {
+                  Get.back();
+                  rebuild();
+                  clearcontroller();
+                  MyFlushBar.showSimpleFlushBar(
+                      'updated successfully', context, Colors.green, white);
+                } else {
+                  Get.back();
+                  rebuild();
+                  clearcontroller();
+                  MyFlushBar.showSimpleFlushBar(
+                      'Failed', context, Colors.green, white);
+                }
+              });
+            },
+            child: categObj.isLoading2 == false
+                ? const Text("Update")
+                : const CircularProgressIndicator(),
+          ),
+        ],
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppTextField(
+              controller: indexController,
+              label: 'Index',
+              hint: 'new Index',
+              filled: true,
+              fillColor: appGrey.withOpacity(0.2),
+              borderColor: appGrey.withOpacity(0.2),
+              focusBorderColor: appGrey.withOpacity(0.2),
+              keyboardType: TextInputType.number,
+              contentPadding: 10,
+              borderRadius: 8,
+              maxLine: 1,
+              textInputAction: TextInputAction.next,
+              validator: (value) {
+                return Validation.validate(value!, 'number');
+              },
+              isLabel: true,
+            ),
+          ],
+        ));
   }
 
   Text _text({text, color, required double size}) {

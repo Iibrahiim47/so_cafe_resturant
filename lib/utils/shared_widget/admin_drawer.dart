@@ -3,7 +3,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../auth/login.dart';
+import '../../constant/shared_pref.dart';
 import '../../super_admin/dashborad/admin_mainDashboad_controller.dart';
+import '../responsive.dart';
 import '../static_data.dart';
 
 class AdminDrawer extends StatefulWidget {
@@ -23,14 +26,15 @@ class _AdminDrawerState extends State<AdminDrawer> {
 
     return Drawer(
       elevation: 0,
-      child: ListView(
-        padding: EdgeInsets.zero,
+      child: Column(
         children: <Widget>[
-          DrawerHeader(
-            decoration: const BoxDecoration(
-              color: primary,
+          const DrawerHeader(
+            decoration: BoxDecoration(),
+            child: CircleAvatar(
+              maxRadius: 40,
+                backgroundColor: primary,
+                backgroundImage: AssetImage('images/logo.png'),
             ),
-            child: Image.asset('images/logo.png'),
           ),
           Padding(
             padding: EdgeInsets.symmetric(vertical: tileSpacing),
@@ -38,7 +42,7 @@ class _AdminDrawerState extends State<AdminDrawer> {
               leading: const Icon(Icons.home),
               title: const Text('Home'),
               onTap: () {
-               drawerTap(0);
+                drawerTap(0);
               },
             ),
           ),
@@ -72,6 +76,26 @@ class _AdminDrawerState extends State<AdminDrawer> {
               },
             ),
           ),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: tileSpacing),
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: ListTile(
+                  title: const Text('Logout'),
+                  tileColor: appSecondary,
+                  titleTextStyle: Responsive.isDesktop(context)
+                      ? const TextStyle(fontSize: 20)
+                      : null,
+                  onTap: () {
+                    PreferencesService.clearPreferences().then((value) {
+                      Get.offAll((const AdminPannelLoginPage()));
+                    });
+                  },
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -80,7 +104,6 @@ class _AdminDrawerState extends State<AdminDrawer> {
   drawerTap(index) {
     controller.onItemTap(index);
     closeDrawer();
-
   }
 
   void closeDrawer() {

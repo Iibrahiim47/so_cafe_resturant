@@ -9,7 +9,7 @@ import 'package:admin_panel_so/utils/responsive.dart';
 import 'package:admin_panel_so/utils/shared_widget/appTextField.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'utils/flushbar.dart';
+import '../utils/flushbar.dart';
 
 class AdminPannelLoginPage extends StatefulWidget {
   const AdminPannelLoginPage({super.key});
@@ -99,11 +99,6 @@ class _AdminPanelLoginPageState extends State<AdminPannelLoginPage> {
                                   Validation.validate(value!, 'password'),
                               isLabel: true,
                             ),
-                            Align(
-                                alignment: Alignment.centerRight,
-                                child: TextButton(
-                                    onPressed: () {},
-                                    child: const Text('forget password'))),
                             Container(
                               margin: const EdgeInsets.symmetric(vertical: 20),
                               width: mediaQueryWidth(context) * 0.5,

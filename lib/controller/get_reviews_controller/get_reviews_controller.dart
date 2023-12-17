@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:admin_panel_so/sub_admin/model/get_reviews_model.dart';
 import 'package:admin_panel_so/utils/static.dart';
+import 'package:admin_panel_so/utils/static_data.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
@@ -10,33 +11,30 @@ class GetReviewsController extends GetxController {
   static GetReviewsController get to => Get.find();
 
   http.Response? response;
-  List<Data> allReviewsList = [];
   bool loading = false;
 
   Future<List<Data>> getReviewsMethod() async {
-    allReviewsList.clear();
-    print(
-        "${StaticValues.getFeedbackUrl}${SubAdminProfileController.to.branchId}");
-    response = await http.get(
-      Uri.parse(
-          "${StaticValues.getFeedbackUrl}${SubAdminProfileController.to.branchId}"),
-      headers: {
-        'Content-type': 'application/json; charset=utf-8',
-      },
-    );
+    try {
+      final response = await http.get(
+        Uri.parse(
+            "${StaticValues.getFeedbackUrl}${4}"),
+        headers: {
+          "Content-type": "application/json-patch+json",
+          "Authorization": "Bearer ${StaticData.token}"
+        },
+      );
 
-    if (response!.statusCode == 200) {
-      print(
-          ",,,,,,,,,,,,,,,,,,,Reviews list...........${response!.body.toString()}");
-      GetReviewsModel model =
-          GetReviewsModel.fromJson(jsonDecode(response!.body));
-      for (int i = 0; i < model.data!.length; i++) {
-        Data d = model.data![i];
-        allReviewsList.add(d);
+      if (response.statusCode == 200) {
+        final catgData = GetReviewsModel.fromJson(jsonDecode(response.body));
+        List<Data> getProductListData = catgData.data ?? [];
+        return getProductListData;
+      } else {
+        // Handle error cases here
+        throw Exception('Failed to fetch product list: ${response.statusCode}');
       }
+    } catch (e) {
+      // Handle exceptions here
+      throw Exception('Failed to fetch product list: $e');
     }
-    print(allReviewsList.length);
-    update();
-    return allReviewsList;
   }
 }

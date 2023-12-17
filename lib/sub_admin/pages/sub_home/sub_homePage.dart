@@ -1,21 +1,17 @@
-import 'package:admin_panel_so/constant/app_color.dart';
 import 'package:admin_panel_so/constant/media_qury.dart';
 import 'package:admin_panel_so/sub_admin/pages/sub_home/sub_home_controller.dart';
 import 'package:admin_panel_so/utils/responsive.dart';
-import 'package:admin_panel_so/utils/shared_widget/appTextField.dart';
 import 'package:admin_panel_so/utils/shared_widget/appTextStyle.dart';
 import 'package:admin_panel_so/utils/static.dart';
 import 'package:admin_panel_so/utils/static_data.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../controller/branch_controller.dart';
+import '../../../controller/category_controller.dart';
 import '../../../controller/menu_controller.dart';
 
-bool isClicked = false;
-
 class SubHomePage extends StatefulWidget {
-  const SubHomePage({super.key});
+  const SubHomePage({Key? key}) : super(key: key);
 
   @override
   State<SubHomePage> createState() => _SubHomePageState();
@@ -24,6 +20,17 @@ class SubHomePage extends StatefulWidget {
 class _SubHomePageState extends State<SubHomePage> {
   final categObj = Get.put(CategoryGetandPostController());
   final menuObj = Get.put(MenuContreoller());
+  @override
+  void initState() {
+    categObj
+        .fetchCatagoriesList(branchId: StaticData.userProfile!.data!.branchId)
+        .then((value) {
+      menuObj.fetchProductList(categoryId: selectedCategory).then((value) {
+        setState(() {});
+      });
+    });
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,122 +38,123 @@ class _SubHomePageState extends State<SubHomePage> {
       init: Get.put(SubHomeController()),
       builder: (obj) {
         return SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
-              /// Responsive SearchBar
-              Responsive.isMobile(context)
-                  ? SizedBox(
-                      height: kToolbarHeight,
-                      width: mediaQueryWidth(context) * 0.8,
-                      child: AppTextField(
-                          prefixIcon: Icons.search,
-                          hint: 'search here',
-                          controller: TextEditingController(),
-                          borderColor: onPrimary,
-                          focusBorderColor: primary,
-                          label: '',
-                          borderRadius: 8,
-                          isLabel: false),
-                    )
-                  : Responsive.isTablet(context)
-                      ? Align(
-                          alignment: Alignment.centerLeft,
-                          child: SizedBox(
-                            height: kToolbarHeight,
-                            width: mediaQueryWidth(context) * 0.4,
-                            child: AppTextField(
-                                prefixIcon: Icons.search,
-                                hint: 'search here',
-                                controller: TextEditingController(),
-                                borderColor: onPrimary,
-                                focusBorderColor: primary,
-                                label: '',
-                                borderRadius: 8,
-                                isLabel: false),
-                          ),
-                        )
-                      : Align(
-                          alignment: Alignment.centerRight,
-                          child: SizedBox(
-                            width: mediaQueryWidth(context) * 0.3,
-                            child: AppTextField(
-                                prefixIcon: Icons.search,
-                                hint: 'search here',
-                                controller: TextEditingController(),
-                                borderColor: onPrimary,
-                                focusBorderColor: primary,
-                                label: '',
-                                borderRadius: 8,
-                                isLabel: false),
-                          ),
-                        ),
-
-              /// Categories
-              /// StreamBuilder for Categories
-              !Responsive.isDesktop(context)
-                  ? Column(
-                      children: [
-                        Align(
-                            alignment: Alignment.centerLeft,
-                            child: AppTextStyle(
-                                marginHor: mediaQueryWidth(context) * 0.05,
-                                text: 'Categories')),
-                        StreamBuilder(
-                          stream: categObj.fetchCatagoriesList(
-                            branchId: StaticData.userProfile!.data!.branchId).asStream(),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return const CircularProgressIndicator();
-                            } else if (snapshot.hasError) {
-                              return Text('Error: ${snapshot.error}');
-                            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                              return const Text('No data available');
-                            } else {
-                              return SizedBox(
-                                height: 100, // Adjust the height as needed
-                                child: GridView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                                    maxCrossAxisExtent: 150, // Adjust this to your item width
-                                  ),
-                                  itemCount: snapshot.data!.length,
-                                  itemBuilder: (context, index) {
-
-                                    return Column(
-                                      children: [
-                                        cachedNetworkImage(
-                                          url: snapshot.data![index].imageUrl.toString(),
-                                        ),
-                                        AppTextStyle(
-                                          text: snapshot.data![index].araName.toString(),
-                                          fontSize: 10,
-                                        ),
-                                      ],
-                                    );
+              SizedBox(
+                height: mediaQueryHeight(context)*0.05
+              ),
+              Align(
+                  alignment: Alignment.centerLeft,
+                  child: AppTextStyle(
+                    fontSize: Responsive.isDesktop(context) ?22:null,
+                      marginHor: !Responsive.isDesktop(context) ?mediaQueryWidth(context) * 0.05 :null,
+                      text: 'Categories')),
+              StreamBuilder(
+                stream: categObj
+                    .fetchCatagoriesList(
+                        branchId: StaticData.userProfile!.data!.branchId)
+                    .asStream(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const CircularProgressIndicator();
+                  } else if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Text('No data available');
+                  } else {
+                    return SizedBox(
+                      width: mediaQueryWidth(context),
+                      height: 100, // Adjust the height as needed
+                      child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.max,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: snapshot.data!.map((category) {
+                            return Padding(
+                                padding: const EdgeInsets.all(
+                                    8.0), // Adjust the padding as needed
+                                child: InkWell(
+                                  onTap: () {
+                                    menuObj
+                                        .fetchProductList(
+                                            categoryId: category.categoryId)
+                                        .then((value) {
+                                      setState(() {});
+                                    });
                                   },
+                                  child: Column(children: [
+                                    cachedNetworkImage(
+                                        url: category.imageUrl.toString()),
+                                    AppTextStyle(
+                                      text: category.araName.toString(),
+                                      fontSize: 10,
+                                    )
+                                  ]),
+                                ));
+                          }).toList())),
+                    );
+                  }
+                },
+              ),
+              Align(
+                  alignment: Alignment.centerLeft,
+                  child: AppTextStyle(
+                      fontSize: Responsive.isDesktop(context) ?22:null,
+                      marginHor: !Responsive.isDesktop(context) ?mediaQueryWidth(context) * 0.05 :null,
+                      text: 'Menu')),
+              menuObj.selectedProductList == null
+                  ? const Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  : GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 170, mainAxisExtent: 170),
+                      shrinkWrap: true,
+                      scrollDirection: Axis.vertical,
+                      itemCount: menuObj.selectedProductList!.length,
+                      itemBuilder: (context, index) {
+                        return InkWell(
+                          onTap: () {},
+                          child: Card(
+                            child: Column(
+                              children: [
+                                Expanded(
+                                    flex: 1,
+                                    child: SizedBox(
+                                      width: mediaQueryWidth(context),
+                                      child: CachedNetworkImage(
+                                          placeholder: (context, url) =>
+                                              const Center(
+                                                  child:
+                                                      CircularProgressIndicator()),
+                                          fit: BoxFit.cover,
+                                          imageUrl:
+                                              "${StaticValues.imageUrl}${menuObj.selectedProductList![index].imageUrl!}"),
+                                    )),
+                                Container(
+                                  margin:
+                                      const EdgeInsets.symmetric(horizontal: 8),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        menuObj.selectedProductList![index]
+                                            .engName!,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                            color: Colors.white),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              );
-                            }
-                          },
-                        )
-
-
-                      ],
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     )
-                  : const SizedBox(),
-
-              !Responsive.isDesktop(context)
-                  ? Column(
-                      children: [
-                        Align(
-                            alignment: Alignment.centerLeft,
-                            child: AppTextStyle(
-                                marginHor: mediaQueryWidth(context) * 0.05,
-                                text: 'Menu')),
-                      ],
-                    )
-                  : SizedBox()
             ],
           ),
         );
@@ -162,7 +170,6 @@ cachedNetworkImage({required String url}) {
       backgroundImage: imageProvider,
       radius: 30,
     ),
-    filterQuality: FilterQuality.low,
     placeholder: (context, url) => const CircleAvatar(
       backgroundColor: Colors.grey,
       radius: 30,

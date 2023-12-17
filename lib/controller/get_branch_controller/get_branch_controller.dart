@@ -14,7 +14,6 @@ class GetBranchListController extends GetxController {
   bool loading = false;
 
   Future<List<Data>?> fetchBranchesList() async {
-    print('fatchBranches');
     try {
       final result = await http.get(
         Uri.parse(StaticValues.getBranchUrl),

@@ -1,6 +1,6 @@
 // ignore_for_file: avoid_print
 
-import 'package:admin_panel_so/controller/branch_controller.dart';
+import 'package:admin_panel_so/controller/category_controller.dart';
 import 'package:admin_panel_so/utils/responsive.dart';
 import 'package:admin_panel_so/sub_admin/model/get_category_model.dart';
 import 'package:admin_panel_so/utils/flushbar.dart';

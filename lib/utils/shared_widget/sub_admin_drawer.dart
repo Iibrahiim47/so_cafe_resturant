@@ -1,8 +1,14 @@
 import 'package:admin_panel_so/constant/app_color.dart';
+import 'package:admin_panel_so/constant/shared_pref.dart';
 import 'package:admin_panel_so/sub_admin/dashboard/sub_admin_dashboad_controller.dart';
+import 'package:admin_panel_so/sub_admin/pages/sub_profile_page.dart';
+import 'package:admin_panel_so/utils/responsive.dart';
+import 'package:admin_panel_so/utils/shared_widget/appTextStyle.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../auth/login.dart';
 import '../static_data.dart';
 
 class SubAdminDrawer extends StatefulWidget {
@@ -22,14 +28,29 @@ class _SubAdminDrawerState extends State<SubAdminDrawer> {
 
     return Drawer(
       elevation: 0,
-      child: ListView(
-        padding: EdgeInsets.zero,
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
         children: <Widget>[
           DrawerHeader(
-            decoration: const BoxDecoration(
-              color: primary,
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                InkWell(
+                  onTap: () {
+                    Get.to(const SubProfilePage());
+                  },
+                  child: CircleAvatar(
+                    radius: 30,
+                    child: AppTextStyle(text:StaticData.userProfile!.data!.name![0].toUpperCase() +
+                            StaticData.userProfile!.data!.name![1],fontSize: 20),
+                  ),
+                ),
+
+                AppTextStyle(text: StaticData.userProfile!.data!.name.toString()) ,
+                AppTextStyle(text: StaticData.userProfile!.data!.email.toString())
+              ],
             ),
-            child: Image.asset('images/logo.png'),
           ),
           Padding(
             padding: EdgeInsets.symmetric(vertical: tileSpacing),
@@ -71,6 +92,27 @@ class _SubAdminDrawerState extends State<SubAdminDrawer> {
               },
             ),
           ),
+
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: tileSpacing),
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: ListTile(
+                  title: const Text('Logout'),
+                  tileColor: appSecondary,
+                  titleTextStyle: Responsive.isDesktop(context)? const TextStyle(fontSize: 20):null,
+                  onTap: () {
+                    PreferencesService.clearPreferences().then((value){
+                      Get.offAll((const AdminPannelLoginPage()));
+                    });
+
+                  },
+                ),
+              ),
+            ),
+          ),
+
         ],
       ),
     );
@@ -79,7 +121,6 @@ class _SubAdminDrawerState extends State<SubAdminDrawer> {
   drawerTap(index) {
     controller.onItemTap(index);
     closeDrawer();
-
   }
 
   void closeDrawer() {

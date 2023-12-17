@@ -22,7 +22,7 @@ class StaticValues {
   static const deleteCategoryUrl = '${StaticValues.baseUrl}Categories/DeleteCategory/';
   static const deleteProductUrl = '${StaticValues.baseUrl}Product/DeleteProduct/';
   static const deleteBranch = '${StaticValues.baseUrl}Branch/DeleteBranch/';
-
+  static const getOrdersAdmin = '${StaticValues.baseUrl}FoodOrder/Order/GetOrdersAdmin/';
   static const updateBranchUrl = '${StaticValues.baseUrl}Branch/UpdateBranch';
   static const updateCategoryUrl = '${StaticValues.baseUrl}Categories/UpdateCategory';
 

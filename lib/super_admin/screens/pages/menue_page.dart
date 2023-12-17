@@ -13,6 +13,7 @@ import '../../../../../utils/responsive.dart';
 import '../../../../../utils/static.dart';
 import '../../../constant/validator.dart';
 import '../../../utils/app_toast.dart';
+import '../../../utils/flushbar.dart';
 import '../../../utils/shared_widget/appTextField.dart';
 
 class MenuPage extends StatefulWidget {
@@ -32,15 +33,17 @@ class _MenuPageState extends State<MenuPage> {
   TextEditingController arabicNameController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   TextEditingController priceController = TextEditingController();
+  TextEditingController indexController = TextEditingController();
 
-  List<DropdownMenuItem<DataList>> categorydropdownMenuItems = [];
+  List<DropdownMenuItem<DataList>> categoryDropdownMenuItems = [];
 
   clearController() {
     nameController.clear();
     arabicNameController.clear();
     descriptionController.clear();
+    indexController.clear();
     priceController.clear();
-    categorydropdownMenuItems.clear();
+    categoryDropdownMenuItems.clear();
     MenuContreoller.to.selectedImage = null;
   }
 
@@ -53,6 +56,7 @@ class _MenuPageState extends State<MenuPage> {
 
   @override
   Widget build(BuildContext context) {
+    print("Categ ${widget.categId}");
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.catgName} /Menu'),
@@ -62,16 +66,8 @@ class _MenuPageState extends State<MenuPage> {
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             return GridView.builder(
-              gridDelegate: Responsive.isMobile(context)
-                  ? const SliverGridDelegateWithFixedCrossAxisCount(
-                      mainAxisExtent: 200,
-                      childAspectRatio: 0.8,
-                      crossAxisCount: 2)
-                  : Responsive.isTablet(context)
-                      ? const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3)
-                      : const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 6),
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 170, mainAxisExtent: 170),
               shrinkWrap: true,
               scrollDirection: Axis.vertical,
               itemCount: snapshot.data!.length,
@@ -126,7 +122,7 @@ class _MenuPageState extends State<MenuPage> {
             const Center(child: CircularProgressIndicator());
           }
           return const Center(
-            child: Text('No Category found'),
+            child: Text('No Menu found'),
           );
         },
       ),
@@ -234,7 +230,8 @@ class _MenuPageState extends State<MenuPage> {
                         fillColor: appGrey.withOpacity(0.2),
                         borderColor: appGrey.withOpacity(0.2),
                         focusBorderColor: appGrey.withOpacity(0.2),
-                        keyboardType: const TextInputType.numberWithOptions(signed: true,decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            signed: true, decimal: true),
                         contentPadding: 10,
                         borderRadius: 8,
                         textInputAction: TextInputAction.next,
@@ -269,6 +266,7 @@ class _MenuPageState extends State<MenuPage> {
                     onPressed: () {
                       Navigator.pop(context);
                       menuObj.selectedImage = null;
+                      menuObj.isLoading2 = false;
                       clearController();
                     },
                     child: const Text("Cancel"),
@@ -333,13 +331,15 @@ class _MenuPageState extends State<MenuPage> {
         } else if (value == 1) {
           /// TODO use this method to update
           updateProduct(
-            productId: modal.productId,
-            price: modal.price,
-            description: modal.description,
-            engName: modal.engName,
-            araName: modal.araName,
-            imageUrl: modal.imageUrl
+            productId: modal.productId!,
+            price: modal.price!,
+            description: modal.description!,
+            engName: modal.engName!,
+            araName: modal.araName!,
           );
+        } else if (value == 2) {
+          /// TODO use this method to update
+          updateProductIndex(productId: modal.productId!);
         }
       },
       color: appBlack,
@@ -355,6 +355,11 @@ class _MenuPageState extends State<MenuPage> {
               child: Row(
                 children: [Icon(Icons.update), Text('update')],
               )),
+          const PopupMenuItem(
+              value: 2,
+              child: Row(
+                children: [Icon(Icons.update), Text('update Index')],
+              )),
         ];
       },
       child: const Icon(Icons.more_vert, color: appWhite),
@@ -362,12 +367,11 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   void updateProduct(
-      {String? engName,
-      String? araName,
-      double? price,
-      String? description,
-      int? productId,
-      String? imageUrl}) {
+      {required String engName,
+      required String araName,
+      required double price,
+      required String description,
+      required int productId}) {
     setState(() {
       nameController.text = engName.toString();
       arabicNameController.text = araName.toString();
@@ -383,8 +387,9 @@ class _MenuPageState extends State<MenuPage> {
               scrollable: true,
               title: const Text("Update Category"),
               content: SizedBox(
-                width: !Responsive.isMobile(context)? mediaQueryWidth(context)*0.3: null,
-
+                width: !Responsive.isMobile(context)
+                    ? mediaQueryWidth(context) * 0.3
+                    : null,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -471,7 +476,8 @@ class _MenuPageState extends State<MenuPage> {
                       fillColor: appGrey.withOpacity(0.2),
                       borderColor: appGrey.withOpacity(0.2),
                       focusBorderColor: appGrey.withOpacity(0.2),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true,signed: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true, signed: true),
                       contentPadding: 10,
                       borderRadius: 8,
                       textInputAction: TextInputAction.next,
@@ -506,14 +512,33 @@ class _MenuPageState extends State<MenuPage> {
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
+                    menuObj.isLoading2 = false;
                     clearController();
                   },
                   child: const Text("Cancel"),
                 ),
                 TextButton(
-                  onPressed: () {
-                    /// add method for update
-                    ///
+                  onPressed: () async {
+                    await menuObj
+                        .updateProduct(
+                            productId: productId,
+                            engName: nameController.text,
+                            arbName: arabicNameController.text,
+                            description: descriptionController.text,
+                            price:
+                                double.parse(priceController.text.toString()),
+                            categoryId: widget.categId!)
+                        .then((value) {
+                      if (value) {
+                        Get.back();
+                        rebuild();
+                        clearController();
+                      } else {
+                        Get.back();
+                        rebuild();
+                        clearController();
+                      }
+                    });
                   },
                   child: menuObj.isLoading2 == false
                       ? const Text("Update")
@@ -525,6 +550,70 @@ class _MenuPageState extends State<MenuPage> {
         );
       },
     );
+  }
+
+  void updateProductIndex({required int productId}) {
+    Get.defaultDialog(
+        title: "Update Index",
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              menuObj.isLoading2 = false;
+              clearController();
+            },
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () async {
+              await menuObj
+                  .updateProductIndex(
+                      productId: productId,
+                      newIndex: int.parse(indexController.text))
+                  .then((value) {
+                if (value == "updated successfully") {
+                  Get.back();
+                  rebuild();
+                  clearController();
+                  MyFlushBar.showSimpleFlushBar(
+                      'updated successfully', context, Colors.green, white);
+                } else {
+                  Get.back();
+                  rebuild();
+                  clearController();
+                  MyFlushBar.showSimpleFlushBar(
+                      'Failed', context, Colors.green, white);
+                }
+              });
+            },
+            child: menuObj.isLoading2 == false
+                ? const Text("Update")
+                : const CircularProgressIndicator(),
+          ),
+        ],
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppTextField(
+              controller: indexController,
+              label: 'Index',
+              hint: 'new Index',
+              filled: true,
+              fillColor: appGrey.withOpacity(0.2),
+              borderColor: appGrey.withOpacity(0.2),
+              focusBorderColor: appGrey.withOpacity(0.2),
+              keyboardType: TextInputType.number,
+              contentPadding: 10,
+              borderRadius: 8,
+              maxLine: 1,
+              textInputAction: TextInputAction.next,
+              validator: (value) {
+                return Validation.validate(value!, 'number');
+              },
+              isLabel: true,
+            ),
+          ],
+        ));
   }
 }
 

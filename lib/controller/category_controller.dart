@@ -1,4 +1,4 @@
-
+// ignore_for_file: deprecated_member_use, prefer_typing_uninitialized_variables
 import 'dart:convert';
 import 'package:admin_panel_so/models/branch_model.dart';
 import 'package:admin_panel_so/sub_admin/model/get_category_model.dart';
@@ -11,7 +11,6 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart';
-
 
 class CategoryGetandPostController extends GetxController {
   static CategoryGetandPostController get to => Get.find();
@@ -96,7 +95,8 @@ class CategoryGetandPostController extends GetxController {
       );
 
       if (response.statusCode == 200) {
-        final catgData = GetCatagoryListModel.fromJson(jsonDecode(response.body));
+        final catgData =
+            GetCatagoryListModel.fromJson(jsonDecode(response.body));
         List<DataList> getCategoryData = catgData.data ?? [];
         selectedCategory = getCategoryData[0].categoryId!.toInt();
         return getCategoryData;
@@ -108,7 +108,6 @@ class CategoryGetandPostController extends GetxController {
       // Handle exceptions here
       throw Exception('Failed to fetch product list: $e');
     }
-
   }
 
   /////////////deletecategory/////////
@@ -131,46 +130,81 @@ class CategoryGetandPostController extends GetxController {
     }
   }
 
+  void addCategoryImage(BuildContext context) {}
+
+  Future<String> updateCategoryIndex({required int categoryId, required int newIndex}) async {
+    final url = Uri.parse('https://api.socafe.cafe/api/Categories/UpdateCategoryIndex');
+
+    final headers = {
+      'Authorization': 'Bearer ${StaticData.token}',
+      'Content-Type': 'application/json-patch+json',
+    };
+
+    final data = [
+      {
+        "id": categoryId,
+        "index": newIndex,
+      }
+    ];
+
+    try {
+      final response = await http.post(
+        url,
+        headers: headers,
+        body: jsonEncode(data),
+      );
+
+      if (response.statusCode == 200) {
+        return "updated successfully";
+      } else {
+        throw Exception('Failed to update category index. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      return 'Error: $e';
+    }
+  }
+
+
 
   Future<bool> updateCategory({
     required int categoryId,
     required String engName,
     required String arName,
   }) async {
-    print('object $categoryId');
-    try {
-      if (selectedImage != null) {
-        await selectedImage!.readAsBytes().then((value) async {
-          deo.FormData data = deo.FormData.fromMap({
-            "categoryId": categoryId,
-            "arName": arName,
-            "engName": engName,
-            "image": deo.MultipartFile.fromBytes(value,
-                filename: basename("${selectedImage!.path}.jpg")),
+      const String updateApi = 'https://api.socafe.cafe/api/Categories/UpdateCategory';
+
+      try {
+        if (selectedImage != null) {
+          await selectedImage!.readAsBytes().then((value) async {
+            deo.FormData data = deo.FormData.fromMap({
+              "categoryId": categoryId,
+              "arName": arName,
+              "engName": engName,
+              "image": deo.MultipartFile.fromBytes(value,
+                  filename: basename("${selectedImage!.path}.jpg")),
+            });
+
+            var response = await dio.post(
+              updateApi,
+              data: data,
+              options: Options(
+                headers: <String, String>{
+                  "Content-type": "multipart/form-data",
+                  "Authorization": "Bearer ${StaticData.token}",
+                },
+              ),
+            );
+
+            if (response.statusCode == 200) {
+              print(response.statusCode);
+              return true;
+            }
           });
-
-          var response = await dio.post(
-            'https://api.socafe.cafe/api/Categories/UpdateCategory',
-            data: data,
-            options: Options(
-              headers: <String, String>{
-                'Content-Type': 'application/json-patch+json',
-                "Authorization": "Bearer ${StaticData.token}"
-              },
-            ),
-          );
-
-          if (response.statusCode == 200) {
-            print(response.statusCode);
-            return true;
-          }
-        });
+        }
+      } catch (e) {
+        print(e);
+        return false;
       }
-    } catch (e) {
-      print(e);
-      rethrow;
+      return false;
     }
-
-    return false;
-  }
 }

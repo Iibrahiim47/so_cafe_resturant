@@ -75,14 +75,9 @@ class _BranchPageState extends State<BranchPage> {
                       if (snapshot.hasData) {
                         return GridView.builder(
                           gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisSpacing: 10,
-                                  mainAxisSpacing: 20,
-                                  mainAxisExtent: Responsive.isDesktop(context)
-                                      ? mediaQueryWidth(context) * 0.12
-                                      : mediaQueryHeight(context) * 0.2,
-                                  crossAxisCount:
-                                      Responsive.isMobile(context) ? 2 : 4),
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 200,
+                              mainAxisExtent: 170),
                           shrinkWrap: true,
                           scrollDirection: Axis.vertical,
                           itemCount: snapshot.data!.length,
@@ -257,6 +252,8 @@ class _BranchPageState extends State<BranchPage> {
               actions: <Widget>[
                 TextButton(
                   onPressed: () {
+                    addBranchObj.isLoading2=false;
+
                     Navigator.pop(context);
                   },
                   child: const Text("Cancel"),
@@ -359,6 +356,8 @@ class _BranchPageState extends State<BranchPage> {
                   onPressed: () {
                     Navigator.pop(context);
                     clearController();
+                    addBranchObj.isLoading2=false;
+
                   },
                   child: const Text("Cancel"),
                 ),
