@@ -1,17 +1,14 @@
-// ignore_for_file: avoid_print
-
 import 'dart:io';
-
 import 'package:admin_panel_so/constant/app_color.dart';
 import 'package:admin_panel_so/controller/branch_controller.dart';
 import 'package:admin_panel_so/sub_admin/model/get_category_model.dart';
 import 'package:admin_panel_so/super_admin/screens/pages/menue_page.dart';
 import 'package:admin_panel_so/utils/responsive.dart';
 import 'package:admin_panel_so/utils/static.dart';
+import 'package:admin_panel_so/utils/static_data.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../../../../constant/media_qury.dart';
 import '../../../../../controller/menu_controller.dart';
 import '../../../constant/validator.dart';
@@ -51,33 +48,24 @@ class _SubMenuPageState extends State<SubMenuPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Menu Category")),
       body: StreamBuilder(
         stream:
-        categObj.fetchCatagoriesList(branchId: widget.branchId).asStream(),
+            categObj.fetchCatagoriesList(branchId:StaticData.userProfile!.data!.branchId).asStream(),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             return GridView.builder(
-              gridDelegate: Responsive.isMobile(context)
-                  ? const SliverGridDelegateWithFixedCrossAxisCount(
-                  mainAxisExtent: 200,
-                  childAspectRatio: 0.8,
-                  crossAxisCount: 2)
-                  : Responsive.isTablet(context)
-                  ? const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3)
-                  : const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 6),
-              shrinkWrap: true,
-              scrollDirection: Axis.vertical,
+              gridDelegate:
+              const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 150,
+                  mainAxisExtent: 170),
               itemCount: snapshot.data!.length,
               itemBuilder: (context, index) {
                 return InkWell(
                   onTap: () {
                     Get.to(() => MenuPage(
-                      catgName: snapshot.data![index].araName,
-                      categId: snapshot.data![index].categoryId,
-                    ));
+                          catgName: snapshot.data![index].araName,
+                          categId: snapshot.data![index].categoryId,
+                        ));
                   },
                   child: Card(
                     child: Column(
@@ -95,7 +83,7 @@ class _SubMenuPageState extends State<SubMenuPage> {
                                   fit: BoxFit.cover,
                                   useOldImageOnUrlChange: true,
                                   imageUrl:
-                                  "${StaticValues.imageUrl}${snapshot.data![index].imageUrl!}"),
+                                      "${StaticValues.imageUrl}${snapshot.data![index].imageUrl!}"),
                             )),
                         Container(
                           margin: const EdgeInsets.symmetric(horizontal: 8),
@@ -164,7 +152,6 @@ class _SubMenuPageState extends State<SubMenuPage> {
                 child: const Text('Yes')),
           );
         } else if (value == 1) {
-          /// TODO use this method to update
           updateCategory(
               engName: modal.engName,
               araName: modal.araName,
@@ -195,11 +182,8 @@ class _SubMenuPageState extends State<SubMenuPage> {
     showAdaptiveDialog(
         context: context,
         builder: (context) {
-          print('Dialog Builder rebuild');
           return StatefulBuilder(
             builder: (context, setState) {
-              print('StateFul Builder rebuild');
-
               return AlertDialog.adaptive(
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
@@ -226,19 +210,19 @@ class _SubMenuPageState extends State<SubMenuPage> {
                             ),
                             child: categObj.selectedImage != null
                                 ? ClipRRect(
-                              borderRadius: BorderRadius.circular(
-                                  10), // Apply the same radius as the Card
-                              child: Image.file(
-                                File(categObj.selectedImage!.path),
-                                fit: BoxFit.cover,
-                              ),
-                            )
+                                    borderRadius: BorderRadius.circular(
+                                        10), // Apply the same radius as the Card
+                                    child: Image.file(
+                                      File(categObj.selectedImage!.path),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
                                 : const Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.image, size: 35),
-                                  Text('No Image')
-                                ]),
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                        Icon(Icons.image, size: 35),
+                                        Text('No Image')
+                                      ]),
                           ),
                         ),
                       ),
@@ -301,9 +285,9 @@ class _SubMenuPageState extends State<SubMenuPage> {
 
                       categObj
                           .addNewCategory(
-                          branchId: widget.branchId,
-                          engName: nameController.text,
-                          arbName: arabicController.text)
+                              branchId: StaticData.userProfile!.data!.branchId,
+                              engName: nameController.text,
+                              arbName: arabicController.text)
                           .then((value) {
                         setState(() {
                           rebuild();
@@ -362,19 +346,19 @@ class _SubMenuPageState extends State<SubMenuPage> {
                           ),
                           child: categObj.selectedImage != null
                               ? ClipRRect(
-                            borderRadius: BorderRadius.circular(
-                                10), // Apply the same radius as the Card
-                            child: Image.file(
-                              File(categObj.selectedImage!.path),
-                              fit: BoxFit.cover,
-                            ),
-                          )
+                                  borderRadius: BorderRadius.circular(
+                                      10), // Apply the same radius as the Card
+                                  child: Image.file(
+                                    File(categObj.selectedImage!.path),
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
                               : const Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.image, size: 35),
-                                Text('No Image')
-                              ]),
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                      Icon(Icons.image, size: 35),
+                                      Text('No Image')
+                                    ]),
                         ),
                       ),
                     ),
@@ -434,17 +418,19 @@ class _SubMenuPageState extends State<SubMenuPage> {
                 TextButton(
                   onPressed: () async {
                     /// add method for update
-                    await categObj.updateCategory(
-                        categoryId: categoryId!,
-                        engName: nameController.text,
-                        arName: arabicController.text).then((value) {
+                    await categObj
+                        .updateCategory(
+                            categoryId: categoryId!,
+                            engName: nameController.text,
+                            arName: arabicController.text)
+                        .then((value) {
                       if (value) {
                         rebuild();
                         MyFlushBar.showSimpleFlushBar(
                             'Category Updated', context, Colors.green, white);
                       } else {
-                        MyFlushBar.showSimpleFlushBar('Update Failed',
-                            context, Colors.redAccent, white);
+                        MyFlushBar.showSimpleFlushBar(
+                            'Update Failed', context, Colors.redAccent, white);
                       }
                     });
                   },

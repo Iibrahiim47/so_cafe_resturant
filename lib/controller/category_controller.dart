@@ -1,7 +1,5 @@
-// ignore_for_file: deprecated_member_use, prefer_typing_uninitialized_variables
 
 import 'dart:convert';
-
 import 'package:admin_panel_so/models/branch_model.dart';
 import 'package:admin_panel_so/sub_admin/model/get_category_model.dart';
 import 'package:admin_panel_so/utils/static.dart';
@@ -14,7 +12,6 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart';
 
-import '../sub_admin/sub_admin_profile_controller/sub_admin_profile_controller.dart';
 
 class CategoryGetandPostController extends GetxController {
   static CategoryGetandPostController get to => Get.find();
@@ -27,10 +24,7 @@ class CategoryGetandPostController extends GetxController {
   String dropDownValue = "Food";
   var typeList = ["Food", "Drinks"];
   bool isLoading2 = false;
-  List<DataList> getCatagoriesListData = [];
-
   XFile? selectedImage;
-
   deo.Dio dio = deo.Dio();
 
   changeCategoryType(String value) {
@@ -91,28 +85,7 @@ class CategoryGetandPostController extends GetxController {
 
   //////////getCategories///////////
 
-  Future<List<DataList>> getCatagoriesList() async {
-    getCatagoriesListData.clear();
-    response = await http.get(
-      Uri.parse(
-          "${StaticValues.getAllCategoryUrl}${SubAdminProfileController.to.branchId}"),
-      headers: {
-        "Content-type": " application/json-patch+json",
-        "Authorization": " Bearer ${StaticData.token}"
-      },
-    );
-
-    if (response!.statusCode == 200) {
-      var catData = GetCatagoryListModel.fromJson(jsonDecode(response!.body));
-      for (var u in catData.data!) {
-        getCatagoriesListData.add(u);
-      }
-    }
-    return getCatagoriesListData;
-  }
-
   Future<List<DataList>> fetchCatagoriesList({int? branchId}) async {
-
     try {
       final response = await http.get(
         Uri.parse("${StaticValues.getAllCategoryUrl}$branchId"),
@@ -124,8 +97,9 @@ class CategoryGetandPostController extends GetxController {
 
       if (response.statusCode == 200) {
         final catgData = GetCatagoryListModel.fromJson(jsonDecode(response.body));
-        List<DataList> getProductListData = catgData.data ?? [];
-        return getProductListData;
+        List<DataList> getCategoryData = catgData.data ?? [];
+        selectedCategory = getCategoryData[0].categoryId!.toInt();
+        return getCategoryData;
       } else {
         // Handle error cases here
         throw Exception('Failed to fetch product list: ${response.statusCode}');
@@ -157,13 +131,13 @@ class CategoryGetandPostController extends GetxController {
     }
   }
 
-  void addCategoryImage(BuildContext context) {}
 
   Future<bool> updateCategory({
     required int categoryId,
     required String engName,
     required String arName,
   }) async {
+    print('object $categoryId');
     try {
       if (selectedImage != null) {
         await selectedImage!.readAsBytes().then((value) async {
