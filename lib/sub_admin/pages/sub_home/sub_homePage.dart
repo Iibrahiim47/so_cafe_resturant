@@ -11,7 +11,7 @@ import '../../../controller/category_controller.dart';
 import '../../../controller/menu_controller.dart';
 
 class SubHomePage extends StatefulWidget {
-  const SubHomePage({Key? key}) : super(key: key);
+  const SubHomePage({super.key});
 
   @override
   State<SubHomePage> createState() => _SubHomePageState();

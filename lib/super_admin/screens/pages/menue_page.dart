@@ -4,9 +4,11 @@ import 'package:admin_panel_so/constant/media_qury.dart';
 import 'package:admin_panel_so/controller/menu_controller.dart';
 import 'package:admin_panel_so/sub_admin/model/get_category_model.dart';
 import 'package:admin_panel_so/sub_admin/model/get_product_model.dart';
+import 'package:admin_panel_so/utils/static_data.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 import '../../../../../constant/app_color.dart';
 import '../../../../../utils/responsive.dart';
@@ -49,6 +51,8 @@ class _MenuPageState extends State<MenuPage> {
 
   @override
   void initState() {
+    selectedCategory = widget.categId;
+    MenuContreoller.to.fetchProductList(categoryId: selectedCategory);
     super.initState();
   }
 
@@ -56,253 +60,269 @@ class _MenuPageState extends State<MenuPage> {
 
   @override
   Widget build(BuildContext context) {
+    var height = MediaQuery.of(context).size.height;
+    var width = MediaQuery.of(context).size.width;
     print("Categ ${widget.categId}");
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.catgName} /Menu'),
       ),
-      body: StreamBuilder(
-        stream: menuObj.fetchProductList(categoryId: widget.categId).asStream(),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return GridView.builder(
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 170, mainAxisExtent: 170),
-              shrinkWrap: true,
-              scrollDirection: Axis.vertical,
-              itemCount: snapshot.data!.length,
-              itemBuilder: (context, index) {
-                return InkWell(
-                  onTap: () {},
-                  child: Card(
-                    child: Column(
-                      children: [
-                        Align(
-                            alignment: Alignment.topRight,
-                            child: popUp(modal: snapshot.data![index])),
-                        Expanded(
-                            flex: 1,
-                            child: SizedBox(
-                              width: mediaQueryWidth(context),
-                              child: CachedNetworkImage(
-                                  placeholder: (context, url) => const Center(
-                                      child: CircularProgressIndicator()),
-                                  fit: BoxFit.cover,
-                                  useOldImageOnUrlChange: true,
-                                  imageUrl:
-                                      "${StaticValues.imageUrl}${snapshot.data![index].imageUrl!}"),
-                            )),
-                        Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Column(
-                            children: [
-                              Text(
-                                snapshot.data![index].araName!,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(color: Colors.white),
+      body: GetBuilder<MenuContreoller>(builder: (obj) {
+        return SizedBox(
+          height: height,
+          width: width,
+          child: Column(
+            children: [
+              ReorderableGridView.builder(
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 170, mainAxisExtent: 170),
+                shrinkWrap: true,
+                onReorder: (oldIndex, newIndex) {
+                  print(oldIndex);
+                  print(
+                      "------------------------------------------this is old index");
+                  print(newIndex);
+                  print(
+                      "------------------------------------------this is new index");
+                  int oldProductId =
+                      obj.getProductListData[oldIndex].productId!;
+                  int newCategoryId =
+                      obj.getProductListData[newIndex].productId!;
+                  obj.updateProductIndex(
+                      productId: oldProductId, newIndex: newIndex);
+                  obj
+                      .updateProductIndex(
+                          productId: newCategoryId, newIndex: oldIndex)
+                      .then(
+                    (value) {
+                      obj.fetchProductList(categoryId: selectedCategory);
+                    },
+                  );
+                },
+                itemCount: obj.getProductListData.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    key: Key(obj.getProductListData[index].engName!),
+                    padding: const EdgeInsets.all(8.0),
+                    child: InkWell(
+                      onTap: () {},
+                      child: Card(
+                        child: Column(
+                          children: [
+                            Align(
+                                alignment: Alignment.topRight,
+                                child: popUp(
+                                    modal: obj.getProductListData[index])),
+                            Expanded(
+                                flex: 1,
+                                child: SizedBox(
+                                  width: mediaQueryWidth(context),
+                                  child: CachedNetworkImage(
+                                      placeholder: (context, url) =>
+                                          const Center(
+                                              child:
+                                                  CircularProgressIndicator()),
+                                      fit: BoxFit.cover,
+                                      useOldImageOnUrlChange: true,
+                                      imageUrl:
+                                          "${StaticValues.imageUrl}${obj.getProductListData[index].imageUrl!}"),
+                                )),
+                            Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 8),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    obj.getProductListData[index].engName!,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                  _text(
+                                      text: "See Menu>>",
+                                      color: appWhite,
+                                      size: 14.0)
+                                ],
                               ),
-                              _text(
-                                  text: "See Menu>>",
-                                  color: appWhite,
-                                  size: 14.0)
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                );
-              },
-            );
-          } else if (!snapshot.hasData) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          } else if (snapshot.connectionState == ConnectionState.waiting) {
-            const Center(child: CircularProgressIndicator());
-          }
-          return const Center(
-            child: Text('No Menu found'),
-          );
-        },
-      ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      }),
       floatingActionButton: FloatingActionButton(
           onPressed: () {
-            addProduct();
+            showGeneralDialog(
+                context: context,
+                pageBuilder: (context, animation, secondaryAnimation) {
+                  return AlertDialog(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    scrollable: true,
+                    title: const Text("New Product"),
+                    content: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          InkWell(
+                            onTap: () => menuObj.pickGalleryImage().then((_) {
+                              setState(() {});
+                            }),
+                            child: Container(
+                              constraints: BoxConstraints(
+                                  maxHeight: mediaQueryHeight(context) * 0.3,
+                                  minHeight: mediaQueryHeight(context) * 0.1,
+                                  minWidth: mediaQueryWidth(context) * 0.32),
+                              child: Card(
+                                color: appGrey.withOpacity(0.5),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                      10), // Adjust the radius as needed
+                                ),
+                                child: menuObj.selectedImage != null
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(
+                                            10), // Apply the same radius as the Card
+                                        child: Image.file(
+                                          File(menuObj.selectedImage!.path),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      )
+                                    : const Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                            Icon(Icons.image, size: 35),
+                                            Text('No Image')
+                                          ]),
+                              ),
+                            ),
+                          ),
+                          menuObj.selectedImage == null
+                              ? const Text('Tap to pick image')
+                              : const SizedBox(),
+                          AppTextField(
+                            controller: nameController,
+                            label: 'Product',
+                            hint: 'english name',
+                            filled: true,
+                            fillColor: appGrey.withOpacity(0.2),
+                            borderColor: appGrey.withOpacity(0.2),
+                            focusBorderColor: appGrey.withOpacity(0.2),
+                            autofillHints: const [AutofillHints.nameSuffix],
+                            keyboardType: TextInputType.name,
+                            contentPadding: 10,
+                            borderRadius: 8,
+                            textInputAction: TextInputAction.next,
+                            validator: (value) {
+                              return Validation.validate(value!, 'name');
+                            },
+                            isLabel: true,
+                          ),
+                          AppTextField(
+                            controller: arabicNameController,
+                            label: 'Arabic Name',
+                            hint: 'arabic name',
+                            filled: true,
+                            fillColor: appGrey.withOpacity(0.2),
+                            borderColor: appGrey.withOpacity(0.2),
+                            focusBorderColor: appGrey.withOpacity(0.2),
+                            autofillHints: const [AutofillHints.nameSuffix],
+                            keyboardType: TextInputType.name,
+                            contentPadding: 10,
+                            borderRadius: 8,
+                            textInputAction: TextInputAction.next,
+                            validator: (value) {
+                              return Validation.validate(value!, 'name');
+                            },
+                            isLabel: true,
+                          ),
+                          AppTextField(
+                            controller: priceController,
+                            label: 'Price',
+                            hint: '00.0',
+                            filled: true,
+                            fillColor: appGrey.withOpacity(0.2),
+                            borderColor: appGrey.withOpacity(0.2),
+                            focusBorderColor: appGrey.withOpacity(0.2),
+                            keyboardType: const TextInputType.numberWithOptions(
+                                signed: true, decimal: true),
+                            contentPadding: 10,
+                            borderRadius: 8,
+                            textInputAction: TextInputAction.next,
+                            validator: (value) {
+                              return Validation.validate(value!, 'price');
+                            },
+                            isLabel: true,
+                          ),
+                          AppTextField(
+                            controller: descriptionController,
+                            label: 'Description',
+                            hint: 'product detail',
+                            filled: true,
+                            fillColor: appGrey.withOpacity(0.2),
+                            borderColor: appGrey.withOpacity(0.2),
+                            focusBorderColor: appGrey.withOpacity(0.2),
+                            autofillHints: const [AutofillHints.nameSuffix],
+                            keyboardType: TextInputType.name,
+                            contentPadding: 10,
+                            borderRadius: 8,
+                            textInputAction: TextInputAction.next,
+                            validator: (value) {
+                              return Validation.validate(value!, 'description');
+                            },
+                            isLabel: true,
+                          ),
+                        ],
+                      ),
+                    ),
+                    actions: <Widget>[
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          menuObj.selectedImage = null;
+                          menuObj.isLoading2 = false;
+                          clearController();
+                        },
+                        child: const Text("Cancel"),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            menuObj.isLoading2 = true;
+                          });
+
+                          menuObj
+                              .addNewProduct(
+                                  categoryId: widget.categId,
+                                  engName: nameController.text,
+                                  arbName: arabicNameController.text,
+                                  description: descriptionController.text,
+                                  price: double.parse(priceController.text))
+                              .then((value) {
+                            setState(() {
+                              rebuild();
+                              menuObj.isLoading2 = false;
+                              Get.back();
+                              clearController();
+                              appToast(msg: 'Branch Added', context: context);
+                            });
+                          });
+                        },
+                        child: menuObj.isLoading2 == false
+                            ? const Text("Save")
+                            : const CircularProgressIndicator(),
+                      ),
+                    ],
+                  );
+                });
           },
           backgroundColor: primary,
           child: const Icon(Icons.add)),
     );
-  }
-
-  addProduct() {
-    showAdaptiveDialog(
-        context: context,
-        builder: (context) {
-          return StatefulBuilder(
-            builder: (context, setState) {
-              return AlertDialog.adaptive(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-                scrollable: true,
-                title: const Text("New Product"),
-                content: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      InkWell(
-                        onTap: () => menuObj.pickGalleryImage().then((_) {
-                          setState(() {});
-                        }),
-                        child: Container(
-                          constraints: BoxConstraints(
-                              maxHeight: mediaQueryHeight(context) * 0.3,
-                              minHeight: mediaQueryHeight(context) * 0.1,
-                              minWidth: mediaQueryWidth(context) * 0.32),
-                          child: Card(
-                            color: appGrey.withOpacity(0.5),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                  10), // Adjust the radius as needed
-                            ),
-                            child: menuObj.selectedImage != null
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(
-                                        10), // Apply the same radius as the Card
-                                    child: Image.file(
-                                      File(menuObj.selectedImage!.path),
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                : const Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                        Icon(Icons.image, size: 35),
-                                        Text('No Image')
-                                      ]),
-                          ),
-                        ),
-                      ),
-                      menuObj.selectedImage == null
-                          ? const Text('Tap to pick image')
-                          : const SizedBox(),
-                      AppTextField(
-                        controller: nameController,
-                        label: 'Product',
-                        hint: 'english name',
-                        filled: true,
-                        fillColor: appGrey.withOpacity(0.2),
-                        borderColor: appGrey.withOpacity(0.2),
-                        focusBorderColor: appGrey.withOpacity(0.2),
-                        autofillHints: const [AutofillHints.nameSuffix],
-                        keyboardType: TextInputType.name,
-                        contentPadding: 10,
-                        borderRadius: 8,
-                        textInputAction: TextInputAction.next,
-                        validator: (value) {
-                          return Validation.validate(value!, 'name');
-                        },
-                        isLabel: true,
-                      ),
-                      AppTextField(
-                        controller: arabicNameController,
-                        label: 'Arabic Name',
-                        hint: 'arabic name',
-                        filled: true,
-                        fillColor: appGrey.withOpacity(0.2),
-                        borderColor: appGrey.withOpacity(0.2),
-                        focusBorderColor: appGrey.withOpacity(0.2),
-                        autofillHints: const [AutofillHints.nameSuffix],
-                        keyboardType: TextInputType.name,
-                        contentPadding: 10,
-                        borderRadius: 8,
-                        textInputAction: TextInputAction.next,
-                        validator: (value) {
-                          return Validation.validate(value!, 'name');
-                        },
-                        isLabel: true,
-                      ),
-                      AppTextField(
-                        controller: priceController,
-                        label: 'Price',
-                        hint: '00.0',
-                        filled: true,
-                        fillColor: appGrey.withOpacity(0.2),
-                        borderColor: appGrey.withOpacity(0.2),
-                        focusBorderColor: appGrey.withOpacity(0.2),
-                        keyboardType: const TextInputType.numberWithOptions(
-                            signed: true, decimal: true),
-                        contentPadding: 10,
-                        borderRadius: 8,
-                        textInputAction: TextInputAction.next,
-                        validator: (value) {
-                          return Validation.validate(value!, 'price');
-                        },
-                        isLabel: true,
-                      ),
-                      AppTextField(
-                        controller: descriptionController,
-                        label: 'Description',
-                        hint: 'product detail',
-                        filled: true,
-                        fillColor: appGrey.withOpacity(0.2),
-                        borderColor: appGrey.withOpacity(0.2),
-                        focusBorderColor: appGrey.withOpacity(0.2),
-                        autofillHints: const [AutofillHints.nameSuffix],
-                        keyboardType: TextInputType.name,
-                        contentPadding: 10,
-                        borderRadius: 8,
-                        textInputAction: TextInputAction.next,
-                        validator: (value) {
-                          return Validation.validate(value!, 'description');
-                        },
-                        isLabel: true,
-                      ),
-                    ],
-                  ),
-                ),
-                actions: <Widget>[
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      menuObj.selectedImage = null;
-                      menuObj.isLoading2 = false;
-                      clearController();
-                    },
-                    child: const Text("Cancel"),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        menuObj.isLoading2 = true;
-                      });
-
-                      menuObj
-                          .addNewProduct(
-                              categoryId: widget.categId,
-                              engName: nameController.text,
-                              arbName: arabicNameController.text,
-                              description: descriptionController.text,
-                              price: double.parse(priceController.text))
-                          .then((value) {
-                        setState(() {
-                          rebuild();
-                          menuObj.isLoading2 = false;
-                          Get.back();
-                          clearController();
-                          appToast(msg: 'Branch Added', context: context);
-                        });
-                      });
-                    },
-                    child: menuObj.isLoading2 == false
-                        ? const Text("Save")
-                        : const CircularProgressIndicator(),
-                  ),
-                ],
-              );
-            },
-          );
-        });
   }
 
   popUp({required Data modal}) {

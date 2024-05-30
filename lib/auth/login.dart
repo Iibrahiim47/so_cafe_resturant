@@ -26,8 +26,8 @@ class _AdminPanelLoginPageState extends State<AdminPannelLoginPage> {
   Widget build(BuildContext context) {
     // obj.loginEmailController.text = "iibrahiim53@gmail.com";
     // obj.loginPassController.text = "12345678";
-    obj.loginEmailController.text = "Mujahidsha127@gmail.com";
-    obj.loginPassController.text = "123456";
+    // obj.loginEmailController.text = "Mujahidsha127@gmail.com";
+    // obj.loginPassController.text = "12345678";
     return Scaffold(body: Obx(() {
       return Stack(
         children: [

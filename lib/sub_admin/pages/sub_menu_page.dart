@@ -27,12 +27,10 @@ class SubMenuPage extends StatefulWidget {
 }
 
 class _SubMenuPageState extends State<SubMenuPage> {
-  final categObj = Get.put(CategoryGetandPostController());
   TextEditingController nameController = TextEditingController();
   TextEditingController arabicController = TextEditingController();
   final formKey = GlobalKey<FormState>();
   final menuController = Get.put(MenuContreoller());
-
   clearcontroller() {
     nameController.clear();
     arabicController.clear();
@@ -40,6 +38,9 @@ class _SubMenuPageState extends State<SubMenuPage> {
 
   @override
   void initState() {
+    Get.put(CategoryGetandPostController());
+    CategoryGetandPostController.to
+        .fetchCatagoriesList(branchId: StaticData.userProfile!.data!.branchId);
     super.initState();
   }
 
@@ -47,121 +48,277 @@ class _SubMenuPageState extends State<SubMenuPage> {
     setState(() {});
   }
 
+  var height, width;
   @override
   Widget build(BuildContext context) {
+    height = MediaQuery.of(context).size.height;
+    width = MediaQuery.of(context).size.width;
+
     return Scaffold(
-      body: Column(
-        children: [
-          Responsive.isDesktop(context)
-              ? Align(
-                  alignment: Alignment.centerLeft,
-                  child: AppTextStyle(
-                      marginVer: 10,
-                      fontSize: Responsive.isDesktop(context) ? 22 : null,
-                      marginHor: !Responsive.isDesktop(context)
-                          ? mediaQueryWidth(context) * 0.05
-                          : null,
-                      text: 'Menu'))
-              : const SizedBox(),
-          Responsive.isDesktop(context)
-              ? const SizedBox(
-                  height: kToolbarHeight,
-                )
-              : const SizedBox(),
-          Expanded(
-            child: StreamBuilder(
-              stream: categObj
-                  .fetchCatagoriesList(
-                      branchId: StaticData.userProfile!.data!.branchId)
-                  .asStream(),
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return ReorderableGridView.builder(
-                    onReorder: (int oldIndex, int newIndex) {
-                      setState(() {
-                        if (newIndex > oldIndex) {
-                          newIndex -= 1;
-                        }
-                        final element = snapshot.data!.removeAt(oldIndex);
-                        snapshot.data!.insert(newIndex, element);
-                      });
-                    },
+      body: GetBuilder<CategoryGetandPostController>(builder: (categObj) {
+        return SizedBox(
+          height: height,
+          width: width,
+          child: Column(
+            children: [
+              Responsive.isDesktop(context)
+                  ? Align(
+                      alignment: Alignment.centerLeft,
+                      child: AppTextStyle(
+                          marginVer: 10,
+                          fontSize: Responsive.isDesktop(context) ? 22 : null,
+                          marginHor: !Responsive.isDesktop(context)
+                              ? mediaQueryWidth(context) * 0.05
+                              : null,
+                          text: 'Menu'))
+                  : const SizedBox(),
+              Responsive.isDesktop(context)
+                  ? const SizedBox(
+                      height: kToolbarHeight,
+                    )
+                  : const SizedBox(),
+              Expanded(
+                child: SizedBox(
+                  height: height,
+                  width: width,
+                  child: ReorderableGridView.builder(
                     gridDelegate:
-                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                            maxCrossAxisExtent: 150, mainAxisExtent: 170),
-                    itemCount: snapshot.data!.length,
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 5,
+                    ),
+                    onReorder: (int oldIndex, int newIndex) {
+                      print(oldIndex);
+                      print(
+                          "------------------------------------------this is old index");
+                      print(newIndex);
+                      print(
+                          "------------------------------------------this is new index");
+                      int oldCategoryId =
+                          categObj.allCategoriesList[oldIndex].categoryId!;
+                      int newCategoryId =
+                          categObj.allCategoriesList[newIndex].categoryId!;
+                      categObj.updateCategoriesIndex(
+                          catID: oldCategoryId, newIndex: newIndex);
+                      categObj
+                          .updateCategoriesIndex(
+                              catID: newCategoryId, newIndex: oldIndex)
+                          .then((value) {
+                        categObj.fetchCatagoriesList(
+                            branchId: StaticData.userProfile!.data!.branchId);
+                      });
+
+                      // setState(() {
+                      //   if (newIndex > oldIndex) {
+                      //     newIndex -= 1;
+                      //   }
+                      //   final element = snapshot.data!.removeAt(oldIndex);
+                      //   snapshot.data!.insert(newIndex, element);
+                      // });
+                    },
+                    itemCount: categObj.allCategoriesList.length,
                     itemBuilder: (context, index) {
-                      return InkWell(
-                        onTap: () {
-                          Get.to(() => MenuPage(
-                                catgName: snapshot.data![index].araName,
-                                categId: snapshot.data![index].categoryId,
-                              ));
-                        },
-                        child: Card(
-                          child: Column(
-                            children: [
-                              Align(
-                                  alignment: Alignment.topRight,
-                                  child: popUp(modal: snapshot.data![index])),
-                              Expanded(
-                                  flex: 1,
-                                  child: SizedBox(
-                                    key: const Key("Const"),
-                                    width: mediaQueryWidth(context),
-                                    child: CachedNetworkImage(
-                                        placeholder: (context, url) =>
-                                            const Center(
-                                                child:
-                                                    CircularProgressIndicator()),
-                                        fit: BoxFit.cover,
-                                        useOldImageOnUrlChange: true,
-                                        imageUrl:
-                                            "${StaticValues.imageUrl}${snapshot.data![index].imageUrl!}"),
-                                  )),
-                              Container(
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 8),
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      snapshot.data![index].araName!,
-                                      overflow: TextOverflow.ellipsis,
-                                      style:
-                                          const TextStyle(color: Colors.white),
-                                    ),
-                                    _text(
-                                        text: "See Menu>>",
-                                        color: appWhite,
-                                        size: 14.0)
-                                  ],
+                      // final String productName = snapshot.data![index].engName!;
+                      return Padding(
+                        key: Key(categObj.allCategoriesList[index].engName!),
+                        padding: const EdgeInsets.all(8.0),
+                        child: InkWell(
+                          // key: Key("$index"),
+                          onTap: () {
+                            Get.to(() => MenuPage(
+                                  catgName:
+                                      categObj.allCategoriesList[index].araName,
+                                  categId: categObj
+                                      .allCategoriesList[index].categoryId,
+                                ));
+                          },
+                          child: Card(
+                            child: Column(
+                              children: [
+                                Align(
+                                    alignment: Alignment.topRight,
+                                    child: popUp(
+                                        modal:
+                                            categObj.allCategoriesList[index])),
+                                Expanded(
+                                    flex: 1,
+                                    child: SizedBox(
+                                      key: const Key("Const"),
+                                      width: mediaQueryWidth(context),
+                                      child: CachedNetworkImage(
+                                          placeholder: (context, url) =>
+                                              const Center(
+                                                  child:
+                                                      CircularProgressIndicator()),
+                                          fit: BoxFit.cover,
+                                          useOldImageOnUrlChange: true,
+                                          imageUrl:
+                                              "${StaticValues.imageUrl}${categObj.allCategoriesList[index].imageUrl!}"),
+                                    )),
+                                Container(
+                                  margin:
+                                      const EdgeInsets.symmetric(horizontal: 8),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        categObj
+                                            .allCategoriesList[index].araName!,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                            color: Colors.white),
+                                      ),
+                                      _text(
+                                          text: "See Menu>>",
+                                          color: appWhite,
+                                          size: 14.0)
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       );
                     },
-                  );
-                } else if (!snapshot.hasData) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                } else if (snapshot.connectionState ==
-                    ConnectionState.waiting) {
-                  const Center(child: CircularProgressIndicator());
-                }
-                return const Center(
-                  child: Text('No Category found'),
-                );
-              },
-            ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      }),
       floatingActionButton: FloatingActionButton(
           onPressed: () {
-            addCategory();
+            showGeneralDialog(
+              context: context,
+              pageBuilder: (context, animation, secondaryAnimation) {
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                  scrollable: true,
+                  title: const Text("New Category"),
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        InkWell(
+                          onTap: () => CategoryGetandPostController.to
+                              .pickGalleryImage()
+                              .then((_) {
+                            setState(() {});
+                          }),
+                          child: Container(
+                            constraints: BoxConstraints(
+                                maxHeight: mediaQueryHeight(context) * 0.3,
+                                minHeight: mediaQueryHeight(context) * 0.1,
+                                minWidth: mediaQueryWidth(context) * 0.32),
+                            child: Card(
+                              color: appGrey.withOpacity(0.5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                    10), // Adjust the radius as needed
+                              ),
+                              child: CategoryGetandPostController
+                                          .to.selectedImage !=
+                                      null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(
+                                          10), // Apply the same radius as the Card
+                                      child: Image.file(
+                                        File(CategoryGetandPostController
+                                            .to.selectedImage!.path),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : const Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                          Icon(Icons.image, size: 35),
+                                          Text('No Image')
+                                        ]),
+                            ),
+                          ),
+                        ),
+                        CategoryGetandPostController.to.selectedImage == null
+                            ? const Text('Tap to pick image')
+                            : const SizedBox(),
+                        AppTextField(
+                          controller: nameController,
+                          label: 'Category',
+                          hint: 'category name',
+                          filled: true,
+                          fillColor: appGrey.withOpacity(0.2),
+                          borderColor: appGrey.withOpacity(0.2),
+                          focusBorderColor: appGrey.withOpacity(0.2),
+                          autofillHints: const [AutofillHints.nameSuffix],
+                          keyboardType: TextInputType.name,
+                          contentPadding: 10,
+                          borderRadius: 8,
+                          textInputAction: TextInputAction.next,
+                          validator: (value) {
+                            return Validation.validate(value!, 'category name');
+                          },
+                          isLabel: true,
+                        ),
+                        AppTextField(
+                          controller: arabicController,
+                          label: 'Description',
+                          hint: 'category detail',
+                          filled: true,
+                          fillColor: appGrey.withOpacity(0.2),
+                          borderColor: appGrey.withOpacity(0.2),
+                          focusBorderColor: appGrey.withOpacity(0.2),
+                          autofillHints: const [AutofillHints.nameSuffix],
+                          keyboardType: TextInputType.name,
+                          contentPadding: 10,
+                          borderRadius: 8,
+                          textInputAction: TextInputAction.next,
+                          validator: (value) {
+                            return Validation.validate(value!, 'category name');
+                          },
+                          isLabel: true,
+                        ),
+                      ],
+                    ),
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        CategoryGetandPostController.to.selectedImage = null;
+                        clearcontroller();
+                      },
+                      child: const Text("Cancel"),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          CategoryGetandPostController.to.isLoading2 = true;
+                        });
+
+                        CategoryGetandPostController.to
+                            .addNewCategory(
+                                branchId:
+                                    StaticData.userProfile!.data!.branchId,
+                                engName: nameController.text,
+                                arbName: arabicController.text)
+                            .then((value) {
+                          setState(() {
+                            rebuild();
+                            CategoryGetandPostController.to.isLoading2 = false;
+                            Navigator.pop(context);
+                            clearcontroller();
+                            appToast(msg: 'Branch Added', context: context);
+                          });
+                        });
+                      },
+                      child: CategoryGetandPostController.to.isLoading2 == false
+                          ? const Text("Save")
+                          : const CircularProgressIndicator(),
+                    ),
+                  ],
+                );
+              },
+            );
           },
           backgroundColor: primary,
           child: const Icon(Icons.add)),
@@ -179,7 +336,7 @@ class _SubMenuPageState extends State<SubMenuPage> {
                 onPressed: () => Get.back(), child: const Text('No')),
             confirm: TextButton(
                 onPressed: () {
-                  categObj
+                  CategoryGetandPostController.to
                       .deleteCategoryMethod(categoryId: modal.categoryId!)
                       .then((value) {
                     setState(() {
@@ -218,136 +375,142 @@ class _SubMenuPageState extends State<SubMenuPage> {
     );
   }
 
-  addCategory() {
-    showAdaptiveDialog(
-        context: context,
-        builder: (context) {
-          return StatefulBuilder(
-            builder: (context, setState) {
-              return AlertDialog.adaptive(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-                scrollable: true,
-                title: const Text("New Category"),
-                content: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      InkWell(
-                        onTap: () => categObj.pickGalleryImage().then((_) {
-                          setState(() {});
-                        }),
-                        child: Container(
-                          constraints: BoxConstraints(
-                              maxHeight: mediaQueryHeight(context) * 0.3,
-                              minHeight: mediaQueryHeight(context) * 0.1,
-                              minWidth: mediaQueryWidth(context) * 0.32),
-                          child: Card(
-                            color: appGrey.withOpacity(0.5),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                  10), // Adjust the radius as needed
-                            ),
-                            child: categObj.selectedImage != null
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(
-                                        10), // Apply the same radius as the Card
-                                    child: Image.file(
-                                      File(categObj.selectedImage!.path),
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                : const Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                        Icon(Icons.image, size: 35),
-                                        Text('No Image')
-                                      ]),
-                          ),
-                        ),
-                      ),
-                      categObj.selectedImage == null
-                          ? const Text('Tap to pick image')
-                          : const SizedBox(),
-                      AppTextField(
-                        controller: nameController,
-                        label: 'Category',
-                        hint: 'category name',
-                        filled: true,
-                        fillColor: appGrey.withOpacity(0.2),
-                        borderColor: appGrey.withOpacity(0.2),
-                        focusBorderColor: appGrey.withOpacity(0.2),
-                        autofillHints: const [AutofillHints.nameSuffix],
-                        keyboardType: TextInputType.name,
-                        contentPadding: 10,
-                        borderRadius: 8,
-                        textInputAction: TextInputAction.next,
-                        validator: (value) {
-                          return Validation.validate(value!, 'category name');
-                        },
-                        isLabel: true,
-                      ),
-                      AppTextField(
-                        controller: arabicController,
-                        label: 'Description',
-                        hint: 'category detail',
-                        filled: true,
-                        fillColor: appGrey.withOpacity(0.2),
-                        borderColor: appGrey.withOpacity(0.2),
-                        focusBorderColor: appGrey.withOpacity(0.2),
-                        autofillHints: const [AutofillHints.nameSuffix],
-                        keyboardType: TextInputType.name,
-                        contentPadding: 10,
-                        borderRadius: 8,
-                        textInputAction: TextInputAction.next,
-                        validator: (value) {
-                          return Validation.validate(value!, 'category name');
-                        },
-                        isLabel: true,
-                      ),
-                    ],
-                  ),
-                ),
-                actions: <Widget>[
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      categObj.selectedImage = null;
-                      clearcontroller();
-                    },
-                    child: const Text("Cancel"),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        categObj.isLoading2 = true;
-                      });
+  // addCategory() {
+  //   showGeneralDialog(
+  //       context: context,
+  //       pageBuilder: (BuildContext buildContext, Animation<double> animation,
+  //           Animation<double> secondaryAnimation) {
+  //         return StatefulBuilder(
+  //           builder: (context, setState) {
+  //             return AlertDialog.adaptive(
+  //               shape: RoundedRectangleBorder(
+  //                   borderRadius: BorderRadius.circular(8)),
+  //               scrollable: true,
+  //               title: const Text("New Category"),
+  //               content: SingleChildScrollView(
+  //                 child: Column(
+  //                   mainAxisSize: MainAxisSize.min,
+  //                   children: [
+  //                     InkWell(
+  //                       onTap: () => CategoryGetandPostController.to
+  //                           .pickGalleryImage()
+  //                           .then((_) {
+  //                         setState(() {});
+  //                       }),
+  //                       child: Container(
+  //                         constraints: BoxConstraints(
+  //                             maxHeight: mediaQueryHeight(context) * 0.3,
+  //                             minHeight: mediaQueryHeight(context) * 0.1,
+  //                             minWidth: mediaQueryWidth(context) * 0.32),
+  //                         child: Card(
+  //                           color: appGrey.withOpacity(0.5),
+  //                           shape: RoundedRectangleBorder(
+  //                             borderRadius: BorderRadius.circular(
+  //                                 10), // Adjust the radius as needed
+  //                           ),
+  //                           child:
+  //                               CategoryGetandPostController.to.selectedImage !=
+  //                                       null
+  //                                   ? ClipRRect(
+  //                                       borderRadius: BorderRadius.circular(
+  //                                           10), // Apply the same radius as the Card
+  //                                       child: Image.file(
+  //                                         File(CategoryGetandPostController
+  //                                             .to.selectedImage!.path),
+  //                                         fit: BoxFit.cover,
+  //                                       ),
+  //                                     )
+  //                                   : const Column(
+  //                                       mainAxisSize: MainAxisSize.min,
+  //                                       children: [
+  //                                           Icon(Icons.image, size: 35),
+  //                                           Text('No Image')
+  //                                         ]),
+  //                         ),
+  //                       ),
+  //                     ),
+  //                     CategoryGetandPostController.to.selectedImage == null
+  //                         ? const Text('Tap to pick image')
+  //                         : const SizedBox(),
+  //                     AppTextField(
+  //                       controller: nameController,
+  //                       label: 'Category',
+  //                       hint: 'category name',
+  //                       filled: true,
+  //                       fillColor: appGrey.withOpacity(0.2),
+  //                       borderColor: appGrey.withOpacity(0.2),
+  //                       focusBorderColor: appGrey.withOpacity(0.2),
+  //                       autofillHints: const [AutofillHints.nameSuffix],
+  //                       keyboardType: TextInputType.name,
+  //                       contentPadding: 10,
+  //                       borderRadius: 8,
+  //                       textInputAction: TextInputAction.next,
+  //                       validator: (value) {
+  //                         return Validation.validate(value!, 'category name');
+  //                       },
+  //                       isLabel: true,
+  //                     ),
+  //                     AppTextField(
+  //                       controller: arabicController,
+  //                       label: 'Description',
+  //                       hint: 'category detail',
+  //                       filled: true,
+  //                       fillColor: appGrey.withOpacity(0.2),
+  //                       borderColor: appGrey.withOpacity(0.2),
+  //                       focusBorderColor: appGrey.withOpacity(0.2),
+  //                       autofillHints: const [AutofillHints.nameSuffix],
+  //                       keyboardType: TextInputType.name,
+  //                       contentPadding: 10,
+  //                       borderRadius: 8,
+  //                       textInputAction: TextInputAction.next,
+  //                       validator: (value) {
+  //                         return Validation.validate(value!, 'category name');
+  //                       },
+  //                       isLabel: true,
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //               actions: <Widget>[
+  //                 TextButton(
+  //                   onPressed: () {
+  //                     Navigator.pop(context);
+  //                     CategoryGetandPostController.to.selectedImage = null;
+  //                     clearcontroller();
+  //                   },
+  //                   child: const Text("Cancel"),
+  //                 ),
+  //                 TextButton(
+  //                   onPressed: () {
+  //                     setState(() {
+  //                       CategoryGetandPostController.to.isLoading2 = true;
+  //                     });
 
-                      categObj
-                          .addNewCategory(
-                              branchId: StaticData.userProfile!.data!.branchId,
-                              engName: nameController.text,
-                              arbName: arabicController.text)
-                          .then((value) {
-                        setState(() {
-                          rebuild();
-                          categObj.isLoading2 = false;
-                          Navigator.pop(context);
-                          clearcontroller();
-                          appToast(msg: 'Branch Added', context: context);
-                        });
-                      });
-                    },
-                    child: categObj.isLoading2 == false
-                        ? const Text("Save")
-                        : const CircularProgressIndicator(),
-                  ),
-                ],
-              );
-            },
-          );
-        });
-  }
+  //                     CategoryGetandPostController.to
+  //                         .addNewCategory(
+  //                             branchId: StaticData.userProfile!.data!.branchId,
+  //                             engName: nameController.text,
+  //                             arbName: arabicController.text)
+  //                         .then((value) {
+  //                       setState(() {
+  //                         rebuild();
+  //                         CategoryGetandPostController.to.isLoading2 = false;
+  //                         Navigator.pop(context);
+  //                         clearcontroller();
+  //                         appToast(msg: 'Branch Added', context: context);
+  //                       });
+  //                     });
+  //                   },
+  //                   child: CategoryGetandPostController.to.isLoading2 == false
+  //                       ? const Text("Save")
+  //                       : const CircularProgressIndicator(),
+  //                 ),
+  //               ],
+  //             );
+  //           },
+  //         );
+  //       });
+  // }
 
   void updateCategory(
       {String? engName, String? araName, int? categoryId, String? imageUrl}) {
@@ -370,9 +533,10 @@ class _SubMenuPageState extends State<SubMenuPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     InkWell(
-                      onTap: () => categObj.pickGalleryImage().then((_) {
-                        setState(() {});
-                      }),
+                      onTap: () => CategoryGetandPostController.to
+                        ..pickGalleryImage().then((_) {
+                          setState(() {});
+                        }),
                       child: Container(
                         constraints: BoxConstraints(
                             maxHeight: mediaQueryHeight(context) * 0.3,
@@ -384,25 +548,28 @@ class _SubMenuPageState extends State<SubMenuPage> {
                             borderRadius: BorderRadius.circular(
                                 10), // Adjust the radius as needed
                           ),
-                          child: categObj.selectedImage != null
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(
-                                      10), // Apply the same radius as the Card
-                                  child: Image.file(
-                                    File(categObj.selectedImage!.path),
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                              : const Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                      Icon(Icons.image, size: 35),
-                                      Text('No Image')
-                                    ]),
+                          child:
+                              CategoryGetandPostController.to.selectedImage !=
+                                      null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(
+                                          10), // Apply the same radius as the Card
+                                      child: Image.file(
+                                        File(CategoryGetandPostController
+                                            .to.selectedImage!.path),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : const Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                          Icon(Icons.image, size: 35),
+                                          Text('No Image')
+                                        ]),
                         ),
                       ),
                     ),
-                    categObj.selectedImage == null
+                    CategoryGetandPostController.to.selectedImage == null
                         ? const Text('Tap to pick image')
                         : const SizedBox(),
                     const SizedBox(
@@ -458,7 +625,7 @@ class _SubMenuPageState extends State<SubMenuPage> {
                 TextButton(
                   onPressed: () async {
                     /// add method for update
-                    await categObj
+                    await CategoryGetandPostController.to
                         .updateCategory(
                             categoryId: categoryId!,
                             engName: nameController.text,
@@ -474,7 +641,7 @@ class _SubMenuPageState extends State<SubMenuPage> {
                       }
                     });
                   },
-                  child: categObj.isLoading2 == false
+                  child: CategoryGetandPostController.to.isLoading2 == false
                       ? const Text("Update")
                       : const CircularProgressIndicator(),
                 ),

@@ -11,7 +11,8 @@ class StaticValues {
   static const getUserUrl = '${StaticValues.baseUrl}UserApi/GetUsers';
   static const getusersProfilUrl = '${StaticValues.baseUrl}UserApi/UserProfile';
   static const addCategoryUrl = '${StaticValues.baseUrl}Categories/AddCategory';
-  static const getAllCategoryUrl = '${StaticValues.baseUrl}Categories/GetCategories/';
+  static const getAllCategoryUrl =
+      '${StaticValues.baseUrl}Categories/GetCategories/';
   static const addProductUrl = '${StaticValues.baseUrl}Product/AddProduct';
   static const getOwnerUrl = '${StaticValues.baseUrl}UserApi/OwnerProfile';
   static const addSliderUrl = '${StaticValues.baseUrl}Slider/AddSlider/';
@@ -19,13 +20,16 @@ class StaticValues {
   static const getproducteUrl = '${StaticValues.baseUrl}Product/GetProduct/';
   static const getFeedbackUrl = '${StaticValues.baseUrl}Feedback/GetFeedbacks/';
   static const deleteSliderUrl = '${StaticValues.baseUrl}Slider/DeleteSlider/';
-  static const deleteCategoryUrl = '${StaticValues.baseUrl}Categories/DeleteCategory/';
-  static const deleteProductUrl = '${StaticValues.baseUrl}Product/DeleteProduct/';
+  static const deleteCategoryUrl =
+      '${StaticValues.baseUrl}Categories/DeleteCategory/';
+  static const deleteProductUrl =
+      '${StaticValues.baseUrl}Product/DeleteProduct/';
   static const deleteBranch = '${StaticValues.baseUrl}Branch/DeleteBranch/';
-  static const getOrdersAdmin = '${StaticValues.baseUrl}FoodOrder/Order/GetOrdersAdmin/';
+  static const getOrdersAdmin =
+      '${StaticValues.baseUrl}FoodOrder/Order/GetOrdersAdmin/';
   static const updateBranchUrl = '${StaticValues.baseUrl}Branch/UpdateBranch';
-  static const updateCategoryUrl = '${StaticValues.baseUrl}Categories/UpdateCategory';
-
-
-
+  static const updateCategoryUrl =
+      '${StaticValues.baseUrl}Categories/UpdateCategory';
+  static const updateCategoryindexUrl =
+      '${StaticValues.baseUrl}Categories/UpdateCategoryIndex';
 }

@@ -83,8 +83,9 @@ class CategoryGetandPostController extends GetxController {
   }
 
   //////////getCategories///////////
-
+  List<DataList> allCategoriesList = [];
   Future<List<DataList>> fetchCatagoriesList({int? branchId}) async {
+    allCategoriesList.clear();
     try {
       final response = await http.get(
         Uri.parse("${StaticValues.getAllCategoryUrl}$branchId"),
@@ -97,9 +98,10 @@ class CategoryGetandPostController extends GetxController {
       if (response.statusCode == 200) {
         final catgData =
             GetCatagoryListModel.fromJson(jsonDecode(response.body));
-        List<DataList> getCategoryData = catgData.data ?? [];
-        selectedCategory = getCategoryData[0].categoryId!.toInt();
-        return getCategoryData;
+        allCategoriesList = catgData.data ?? [];
+        selectedCategory = allCategoriesList[0].categoryId!.toInt();
+        update();
+        return allCategoriesList;
       } else {
         // Handle error cases here
         throw Exception('Failed to fetch product list: ${response.statusCode}');
@@ -107,6 +109,43 @@ class CategoryGetandPostController extends GetxController {
     } catch (e) {
       // Handle exceptions here
       throw Exception('Failed to fetch product list: $e');
+    }
+  }
+
+  //////update categories index////////////
+  Future<String> updateCategoriesIndex(
+      {required int catID, required int newIndex}) async {
+    final url = Uri.parse(StaticValues.updateCategoryindexUrl);
+
+    final headers = {
+      'Authorization': 'Bearer ${StaticData.token}',
+      'Content-Type': 'application/json-patch+json',
+    };
+
+    final data = [
+      {
+        "id": catID,
+        "index": newIndex,
+      }
+    ];
+
+    try {
+      final response = await http.post(
+        url,
+        headers: headers,
+        body: jsonEncode(data),
+      );
+
+      if (response.statusCode == 200) {
+        print("updated successfully");
+        return "updated successfully";
+      } else {
+        print("updated errooooooor");
+        throw Exception(
+            'Failed to update product index: ${response.statusCode}');
+      }
+    } catch (e) {
+      return 'Error: $e';
     }
   }
 
@@ -121,6 +160,7 @@ class CategoryGetandPostController extends GetxController {
         },
       );
       if (response.statusCode == 200) {
+        update();
       } else {
         throw Exception(
             'Failed to delete category. Status code: ${response.statusCode}');
@@ -132,8 +172,10 @@ class CategoryGetandPostController extends GetxController {
 
   void addCategoryImage(BuildContext context) {}
 
-  Future<String> updateCategoryIndex({required int categoryId, required int newIndex}) async {
-    final url = Uri.parse('https://api.socafe.cafe/api/Categories/UpdateCategoryIndex');
+  Future<String> updateCategoryIndex(
+      {required int categoryId, required int newIndex}) async {
+    final url =
+        Uri.parse('https://api.socafe.cafe/api/Categories/UpdateCategoryIndex');
 
     final headers = {
       'Authorization': 'Bearer ${StaticData.token}',
@@ -155,56 +197,58 @@ class CategoryGetandPostController extends GetxController {
       );
 
       if (response.statusCode == 200) {
+        update();
         return "updated successfully";
       } else {
-        throw Exception('Failed to update category index. Status code: ${response.statusCode}');
+        throw Exception(
+            'Failed to update category index. Status code: ${response.statusCode}');
       }
     } catch (e) {
       return 'Error: $e';
     }
   }
 
-
-
   Future<bool> updateCategory({
     required int categoryId,
     required String engName,
     required String arName,
   }) async {
-      const String updateApi = 'https://api.socafe.cafe/api/Categories/UpdateCategory';
+    const String updateApi =
+        'https://api.socafe.cafe/api/Categories/UpdateCategory';
 
-      try {
-        if (selectedImage != null) {
-          await selectedImage!.readAsBytes().then((value) async {
-            deo.FormData data = deo.FormData.fromMap({
-              "categoryId": categoryId,
-              "arName": arName,
-              "engName": engName,
-              "image": deo.MultipartFile.fromBytes(value,
-                  filename: basename("${selectedImage!.path}.jpg")),
-            });
-
-            var response = await dio.post(
-              updateApi,
-              data: data,
-              options: Options(
-                headers: <String, String>{
-                  "Content-type": "multipart/form-data",
-                  "Authorization": "Bearer ${StaticData.token}",
-                },
-              ),
-            );
-
-            if (response.statusCode == 200) {
-              print(response.statusCode);
-              return true;
-            }
+    try {
+      if (selectedImage != null) {
+        await selectedImage!.readAsBytes().then((value) async {
+          deo.FormData data = deo.FormData.fromMap({
+            "categoryId": categoryId,
+            "arName": arName,
+            "engName": engName,
+            "image": deo.MultipartFile.fromBytes(value,
+                filename: basename("${selectedImage!.path}.jpg")),
           });
-        }
-      } catch (e) {
-        print(e);
-        return false;
+
+          var response = await dio.post(
+            updateApi,
+            data: data,
+            options: Options(
+              headers: <String, String>{
+                "Content-type": "multipart/form-data",
+                "Authorization": "Bearer ${StaticData.token}",
+              },
+            ),
+          );
+
+          if (response.statusCode == 200) {
+            update();
+            print(response.statusCode);
+            return true;
+          }
+        });
       }
+    } catch (e) {
+      print(e);
       return false;
     }
+    return false;
+  }
 }

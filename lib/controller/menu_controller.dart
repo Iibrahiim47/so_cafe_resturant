@@ -28,7 +28,10 @@ class MenuContreoller extends GetxController {
         .then((value) => selectedImage = value);
   }
 
+///////getproducts//////////
+  List<Data> getProductListData = [];
   Future<List<Data>> fetchProductList({categoryId}) async {
+    getProductListData.clear();
     try {
       final response = await http.get(
         Uri.parse("${StaticValues.getproducteUrl}$categoryId"),
@@ -40,9 +43,12 @@ class MenuContreoller extends GetxController {
 
       if (response.statusCode == 200) {
         final prodData = GetProductModel.fromJson(jsonDecode(response.body));
-        List<Data> getProductListData = prodData.data ?? [];
+        getProductListData = prodData.data ?? [];
         selectedProductList = getProductListData;
+        update();
         print("Menu List ${jsonEncode(selectedProductList)}");
+        print("selected category...............$selectedCategory");
+        print("${getProductListData.first.engName}");
         return getProductListData;
       } else {
         // Handle error cases here
@@ -85,6 +91,7 @@ class MenuContreoller extends GetxController {
           );
 
           if (response.statusCode == 200) {
+            update();
             if (response.data != null) {
               // You may want to handle the result here or return it, depending on your needs.
               print("Upload successful. Result: ${response.data}");
@@ -112,6 +119,7 @@ class MenuContreoller extends GetxController {
       );
 
       if (response.statusCode == 200) {
+        update();
         // The product was deleted successfully.
       } else {
         throw Exception(
@@ -123,7 +131,8 @@ class MenuContreoller extends GetxController {
     }
   }
 
-  Future<String> updateProductIndex({required int productId, required int newIndex}) async {
+  Future<String> updateProductIndex(
+      {required int productId, required int newIndex}) async {
     final url =
         Uri.parse('https://api.socafe.cafe/api/Product/UpdateProductIndex');
 
@@ -147,6 +156,7 @@ class MenuContreoller extends GetxController {
       );
 
       if (response.statusCode == 200) {
+        update();
         return "updated successfully";
       } else {
         throw Exception(
@@ -194,6 +204,7 @@ class MenuContreoller extends GetxController {
           );
 
           if (response.statusCode == 200) {
+            update();
             print(response.statusCode);
             return true;
           }

@@ -82,5 +82,5 @@ Future<void> getUserProfile() async {
     // Handle any exceptions that occur during the HTTP request
     throw Exception('Error: $e');
   }
-  return null;
+  return;
 }
